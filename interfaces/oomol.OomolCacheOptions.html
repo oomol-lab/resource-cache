@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="x-ua-compatible" content="IE=edge">
-    <title>AppCatalogSummary | @oomol-lab/resource-cache - v0.1.0</title>
+    <title>OomolCacheOptions | @oomol-lab/resource-cache - v0.1.0</title>
     <meta name="description" content="Documentation for @oomol-lab/resource-cache">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="../assets/style.css">
@@ -57,40 +57,66 @@
         <div class="tsd-page-title">
           <ul class="tsd-breadcrumb" aria-label="Breadcrumb">
             <li><a href="../modules/oomol.html">oomol</a></li>
-            <li><a href="" aria-current="page">AppCatalogSummary</a></li>
+            <li><a href="" aria-current="page">OomolCacheOptions</a></li>
           </ul>
-          <h1>Interface AppCatalogSummary</h1>
+          <h1>Interface OomolCacheOptions&lt;T&gt;</h1>
         </div>
         <div class="tsd-signature">
-          <span class="tsd-signature-keyword">interface</span> <span class="tsd-kind-interface">AppCatalogSummary</span>
-          <span class="tsd-signature-symbol">{</span><br>    <a class="tsd-kind-property" href="#actioncount"
-            >actionCount</a
+          <span class="tsd-signature-keyword">interface</span> <span class="tsd-kind-interface">OomolCacheOptions</span
+          ><span class="tsd-signature-symbol">&lt;</span
+          ><a class="tsd-signature-type tsd-kind-type-parameter" href="#t">T</a
+          ><span class="tsd-signature-symbol">&gt;</span> <span class="tsd-signature-symbol">{</span><br>    <a
+            class="tsd-kind-property"
+            href="#decode"
+            >decode</a
+          ><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span
+          ><span class="tsd-kind-parameter">value</span><span class="tsd-signature-symbol">:</span>
+          <span class="tsd-signature-type">unknown</span><span class="tsd-signature-symbol">)</span>
+          <span class="tsd-signature-symbol">=&gt;</span>
+          <a class="tsd-signature-type tsd-kind-type-parameter" href="#t">T</a><span class="tsd-signature-symbol"
+            >;</span
+          ><br>    <a class="tsd-kind-property" href="#load">load</a><span class="tsd-signature-symbol">:</span>
+          <span class="tsd-signature-symbol">(</span><br>        <span class="tsd-kind-parameter">query</span
+          ><span class="tsd-signature-symbol">:</span>
+          <a href="oomol.OomolQuery.html" class="tsd-signature-type tsd-kind-interface">OomolQuery</a><span
+            class="tsd-signature-symbol"
+            >,</span
+          ><br>        <span class="tsd-kind-parameter">validation</span><span class="tsd-signature-symbol">:</span>
+          <a href="index.CacheValidation.html" class="tsd-signature-type tsd-kind-interface">CacheValidation</a><span
+            class="tsd-signature-symbol"
+            >,</span
+          ><br>    <span class="tsd-signature-symbol">)</span> <span class="tsd-signature-symbol">=&gt;</span>
+          <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span
+          ><a href="../types/index.LoadResult.html" class="tsd-signature-type tsd-kind-type-alias">LoadResult</a
+          ><span class="tsd-signature-symbol">&lt;</span
+          ><a class="tsd-signature-type tsd-kind-type-parameter" href="#t">T</a
+          ><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">&gt;</span
+          ><span class="tsd-signature-symbol">;</span><br>    <a class="tsd-kind-property" href="#locale">locale</a
+          ><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span
+          ><span class="tsd-signature-symbol">;</span><br>    <a class="tsd-kind-property" href="#maxage">maxAge</a
           ><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span
-          ><span class="tsd-signature-symbol">;</span><br>    <a class="tsd-kind-property" href="#apikeyprovidercount"
-            >apiKeyProviderCount</a
+          ><span class="tsd-signature-symbol">;</span><br>    <a class="tsd-kind-property" href="#schemaversion"
+            >schemaVersion</a
           ><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span
-          ><span class="tsd-signature-symbol">;</span><br>    <a class="tsd-kind-property" href="#categorycount"
-            >categoryCount</a
-          ><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span
-          ><span class="tsd-signature-symbol">;</span><br>    <a class="tsd-kind-property" href="#healthyprovidercount"
-            >healthyProviderCount</a
-          ><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span>
-          <span class="tsd-signature-symbol">|</span> <span class="tsd-signature-type">null</span
-          ><span class="tsd-signature-symbol">;</span><br>    <a class="tsd-kind-property" href="#oauthprovidercount"
-            >oauthProviderCount</a
-          ><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span
-          ><span class="tsd-signature-symbol">;</span><br>    <a class="tsd-kind-property" href="#providercount"
-            >providerCount</a
-          ><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span
+          ><span class="tsd-signature-symbol">;</span><br>    <a class="tsd-kind-property" href="#scope">scope</a
+          ><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">string</span
           ><span class="tsd-signature-symbol">;</span><br><span class="tsd-signature-symbol">}</span>
         </div>
+        <section class="tsd-panel">
+          <h4>Type Parameters</h4>
+          <ul class="tsd-type-parameter-list">
+            <li>
+              <span id="t"><span class="tsd-kind-type-parameter">T</span></span>
+            </li>
+          </ul>
+        </section>
         <aside class="tsd-sources">
           <ul>
             <li>
               Defined in
               <a
-                href="https://github.com/oomol-lab/resource-cache/blob/80bfc388c8ce5d5e5ae426ac3b6a56e13d3067cb/src/oomol.ts#L235"
-                >oomol.ts:235</a
+                href="https://github.com/oomol-lab/resource-cache/blob/80bfc388c8ce5d5e5ae426ac3b6a56e13d3067cb/src/oomol.ts#L19"
+                >oomol.ts:19</a
               >
             </li>
           </ul>
@@ -108,35 +134,35 @@
                 <section class="tsd-index-section">
                   <h3 class="tsd-index-heading">Properties</h3>
                   <div class="tsd-index-list">
-                    <a href="#actioncount" class="tsd-index-link"
+                    <a href="#decode" class="tsd-index-link"
                       ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property">
                         <use href="../assets/icons.svg#icon-1024"></use>
-                      </svg><span>action<wbr>Count</span></a
+                      </svg><span>decode</span></a
                     >
-                    <a href="#apikeyprovidercount" class="tsd-index-link"
+                    <a href="#load" class="tsd-index-link"
                       ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property">
                         <use href="../assets/icons.svg#icon-1024"></use>
-                      </svg><span>api<wbr>Key<wbr>Provider<wbr>Count</span></a
+                      </svg><span>load</span></a
                     >
-                    <a href="#categorycount" class="tsd-index-link"
+                    <a href="#locale" class="tsd-index-link"
                       ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property">
                         <use href="../assets/icons.svg#icon-1024"></use>
-                      </svg><span>category<wbr>Count</span></a
+                      </svg><span>locale</span></a
                     >
-                    <a href="#healthyprovidercount" class="tsd-index-link"
+                    <a href="#maxage" class="tsd-index-link"
                       ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property">
                         <use href="../assets/icons.svg#icon-1024"></use>
-                      </svg><span>healthy<wbr>Provider<wbr>Count</span></a
+                      </svg><span>max<wbr>Age</span></a
                     >
-                    <a href="#oauthprovidercount" class="tsd-index-link"
+                    <a href="#schemaversion" class="tsd-index-link"
                       ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property">
                         <use href="../assets/icons.svg#icon-1024"></use>
-                      </svg><span>oauth<wbr>Provider<wbr>Count</span></a
+                      </svg><span>schema<wbr>Version</span></a
                     >
-                    <a href="#providercount" class="tsd-index-link"
+                    <a href="#scope" class="tsd-index-link"
                       ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property">
                         <use href="../assets/icons.svg#icon-1024"></use>
-                      </svg><span>provider<wbr>Count</span></a
+                      </svg><span>scope?</span></a
                     >
                   </div>
                 </section>
@@ -153,16 +179,110 @@
           </summary>
           <section>
             <section class="tsd-panel tsd-member">
-              <h3 class="tsd-anchor-link" id="actioncount">
-                <span>action<wbr>Count</span
-                ><a href="#actioncount" aria-label="Permalink" class="tsd-anchor-icon"
+              <h3 class="tsd-anchor-link" id="decode">
+                <code class="tsd-tag">Readonly</code><span>decode</span
+                ><a href="#decode" aria-label="Permalink" class="tsd-anchor-icon"
                   ><svg viewBox="0 0 24 24" aria-hidden="true">
                     <use href="../assets/icons.svg#icon-anchor"></use>
                   </svg></a
                 >
               </h3>
               <div class="tsd-signature">
-                <span class="tsd-kind-property">actionCount</span><span class="tsd-signature-symbol">:</span>
+                <span class="tsd-kind-property">decode</span><span class="tsd-signature-symbol">:</span>
+                <span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">value</span
+                ><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">unknown</span
+                ><span class="tsd-signature-symbol">)</span> <span class="tsd-signature-symbol">=&gt;</span>
+                <a class="tsd-signature-type tsd-kind-type-parameter" href="#t">T</a>
+              </div>
+              <aside class="tsd-sources">
+                <ul>
+                  <li>
+                    Defined in
+                    <a
+                      href="https://github.com/oomol-lab/resource-cache/blob/80bfc388c8ce5d5e5ae426ac3b6a56e13d3067cb/src/oomol.ts#L26"
+                      >oomol.ts:26</a
+                    >
+                  </li>
+                </ul>
+              </aside>
+            </section>
+            <section class="tsd-panel tsd-member">
+              <h3 class="tsd-anchor-link" id="load">
+                <code class="tsd-tag">Readonly</code><span>load</span
+                ><a href="#load" aria-label="Permalink" class="tsd-anchor-icon"
+                  ><svg viewBox="0 0 24 24" aria-hidden="true">
+                    <use href="../assets/icons.svg#icon-anchor"></use>
+                  </svg></a
+                >
+              </h3>
+              <div class="tsd-signature">
+                <span class="tsd-kind-property">load</span><span class="tsd-signature-symbol">:</span>
+                <span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">query</span
+                ><span class="tsd-signature-symbol">:</span>
+                <a href="oomol.OomolQuery.html" class="tsd-signature-type tsd-kind-interface">OomolQuery</a><span
+                  class="tsd-signature-symbol"
+                  >,</span
+                > <span class="tsd-kind-parameter">validation</span><span class="tsd-signature-symbol">:</span>
+                <a href="index.CacheValidation.html" class="tsd-signature-type tsd-kind-interface"
+                  >CacheValidation</a
+                ><span class="tsd-signature-symbol">)</span> <span class="tsd-signature-symbol">=&gt;</span>
+                <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span
+                ><a href="../types/index.LoadResult.html" class="tsd-signature-type tsd-kind-type-alias">LoadResult</a
+                ><span class="tsd-signature-symbol">&lt;</span
+                ><a class="tsd-signature-type tsd-kind-type-parameter" href="#t">T</a
+                ><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">&gt;</span>
+              </div>
+              <aside class="tsd-sources">
+                <ul>
+                  <li>
+                    Defined in
+                    <a
+                      href="https://github.com/oomol-lab/resource-cache/blob/80bfc388c8ce5d5e5ae426ac3b6a56e13d3067cb/src/oomol.ts#L27"
+                      >oomol.ts:27</a
+                    >
+                  </li>
+                </ul>
+              </aside>
+            </section>
+            <section class="tsd-panel tsd-member">
+              <h3 class="tsd-anchor-link" id="locale">
+                <code class="tsd-tag">Readonly</code><span>locale</span
+                ><a href="#locale" aria-label="Permalink" class="tsd-anchor-icon"
+                  ><svg viewBox="0 0 24 24" aria-hidden="true">
+                    <use href="../assets/icons.svg#icon-anchor"></use>
+                  </svg></a
+                >
+              </h3>
+              <div class="tsd-signature">
+                <span class="tsd-kind-property">locale</span><span class="tsd-signature-symbol">:</span>
+                <span class="tsd-signature-type">string</span>
+              </div>
+              <div class="tsd-comment tsd-typography">
+                <p>Locale sent to the host loader and included in the cache identity.</p>
+              </div>
+              <aside class="tsd-sources">
+                <ul>
+                  <li>
+                    Defined in
+                    <a
+                      href="https://github.com/oomol-lab/resource-cache/blob/80bfc388c8ce5d5e5ae426ac3b6a56e13d3067cb/src/oomol.ts#L23"
+                      >oomol.ts:23</a
+                    >
+                  </li>
+                </ul>
+              </aside>
+            </section>
+            <section class="tsd-panel tsd-member">
+              <h3 class="tsd-anchor-link" id="maxage">
+                <code class="tsd-tag">Readonly</code><span>max<wbr>Age</span
+                ><a href="#maxage" aria-label="Permalink" class="tsd-anchor-icon"
+                  ><svg viewBox="0 0 24 24" aria-hidden="true">
+                    <use href="../assets/icons.svg#icon-anchor"></use>
+                  </svg></a
+                >
+              </h3>
+              <div class="tsd-signature">
+                <span class="tsd-kind-property">maxAge</span><span class="tsd-signature-symbol">:</span>
                 <span class="tsd-signature-type">number</span>
               </div>
               <aside class="tsd-sources">
@@ -170,24 +290,24 @@
                   <li>
                     Defined in
                     <a
-                      href="https://github.com/oomol-lab/resource-cache/blob/80bfc388c8ce5d5e5ae426ac3b6a56e13d3067cb/src/oomol.ts#L237"
-                      >oomol.ts:237</a
+                      href="https://github.com/oomol-lab/resource-cache/blob/80bfc388c8ce5d5e5ae426ac3b6a56e13d3067cb/src/oomol.ts#L25"
+                      >oomol.ts:25</a
                     >
                   </li>
                 </ul>
               </aside>
             </section>
             <section class="tsd-panel tsd-member">
-              <h3 class="tsd-anchor-link" id="apikeyprovidercount">
-                <span>api<wbr>Key<wbr>Provider<wbr>Count</span
-                ><a href="#apikeyprovidercount" aria-label="Permalink" class="tsd-anchor-icon"
+              <h3 class="tsd-anchor-link" id="schemaversion">
+                <code class="tsd-tag">Readonly</code><span>schema<wbr>Version</span
+                ><a href="#schemaversion" aria-label="Permalink" class="tsd-anchor-icon"
                   ><svg viewBox="0 0 24 24" aria-hidden="true">
                     <use href="../assets/icons.svg#icon-anchor"></use>
                   </svg></a
                 >
               </h3>
               <div class="tsd-signature">
-                <span class="tsd-kind-property">apiKeyProviderCount</span><span class="tsd-signature-symbol">:</span>
+                <span class="tsd-kind-property">schemaVersion</span><span class="tsd-signature-symbol">:</span>
                 <span class="tsd-signature-type">number</span>
               </div>
               <aside class="tsd-sources">
@@ -195,109 +315,36 @@
                   <li>
                     Defined in
                     <a
-                      href="https://github.com/oomol-lab/resource-cache/blob/80bfc388c8ce5d5e5ae426ac3b6a56e13d3067cb/src/oomol.ts#L240"
-                      >oomol.ts:240</a
+                      href="https://github.com/oomol-lab/resource-cache/blob/80bfc388c8ce5d5e5ae426ac3b6a56e13d3067cb/src/oomol.ts#L24"
+                      >oomol.ts:24</a
                     >
                   </li>
                 </ul>
               </aside>
             </section>
             <section class="tsd-panel tsd-member">
-              <h3 class="tsd-anchor-link" id="categorycount">
-                <span>category<wbr>Count</span
-                ><a href="#categorycount" aria-label="Permalink" class="tsd-anchor-icon"
+              <h3 class="tsd-anchor-link" id="scope">
+                <code class="tsd-tag">Optional</code> <code class="tsd-tag">Readonly</code><span>scope</span
+                ><a href="#scope" aria-label="Permalink" class="tsd-anchor-icon"
                   ><svg viewBox="0 0 24 24" aria-hidden="true">
                     <use href="../assets/icons.svg#icon-anchor"></use>
                   </svg></a
                 >
               </h3>
               <div class="tsd-signature">
-                <span class="tsd-kind-property">categoryCount</span><span class="tsd-signature-symbol">:</span>
-                <span class="tsd-signature-type">number</span>
+                <span class="tsd-kind-property">scope</span><span class="tsd-signature-symbol">?:</span>
+                <span class="tsd-signature-type">string</span>
+              </div>
+              <div class="tsd-comment tsd-typography">
+                <p>Optional non-secret identity for a data environment or user/team/permission scope.</p>
               </div>
               <aside class="tsd-sources">
                 <ul>
                   <li>
                     Defined in
                     <a
-                      href="https://github.com/oomol-lab/resource-cache/blob/80bfc388c8ce5d5e5ae426ac3b6a56e13d3067cb/src/oomol.ts#L238"
-                      >oomol.ts:238</a
-                    >
-                  </li>
-                </ul>
-              </aside>
-            </section>
-            <section class="tsd-panel tsd-member">
-              <h3 class="tsd-anchor-link" id="healthyprovidercount">
-                <span>healthy<wbr>Provider<wbr>Count</span
-                ><a href="#healthyprovidercount" aria-label="Permalink" class="tsd-anchor-icon"
-                  ><svg viewBox="0 0 24 24" aria-hidden="true">
-                    <use href="../assets/icons.svg#icon-anchor"></use>
-                  </svg></a
-                >
-              </h3>
-              <div class="tsd-signature">
-                <span class="tsd-kind-property">healthyProviderCount</span><span class="tsd-signature-symbol">:</span>
-                <span class="tsd-signature-type">number</span> <span class="tsd-signature-symbol">|</span>
-                <span class="tsd-signature-type">null</span>
-              </div>
-              <aside class="tsd-sources">
-                <ul>
-                  <li>
-                    Defined in
-                    <a
-                      href="https://github.com/oomol-lab/resource-cache/blob/80bfc388c8ce5d5e5ae426ac3b6a56e13d3067cb/src/oomol.ts#L241"
-                      >oomol.ts:241</a
-                    >
-                  </li>
-                </ul>
-              </aside>
-            </section>
-            <section class="tsd-panel tsd-member">
-              <h3 class="tsd-anchor-link" id="oauthprovidercount">
-                <span>oauth<wbr>Provider<wbr>Count</span
-                ><a href="#oauthprovidercount" aria-label="Permalink" class="tsd-anchor-icon"
-                  ><svg viewBox="0 0 24 24" aria-hidden="true">
-                    <use href="../assets/icons.svg#icon-anchor"></use>
-                  </svg></a
-                >
-              </h3>
-              <div class="tsd-signature">
-                <span class="tsd-kind-property">oauthProviderCount</span><span class="tsd-signature-symbol">:</span>
-                <span class="tsd-signature-type">number</span>
-              </div>
-              <aside class="tsd-sources">
-                <ul>
-                  <li>
-                    Defined in
-                    <a
-                      href="https://github.com/oomol-lab/resource-cache/blob/80bfc388c8ce5d5e5ae426ac3b6a56e13d3067cb/src/oomol.ts#L239"
-                      >oomol.ts:239</a
-                    >
-                  </li>
-                </ul>
-              </aside>
-            </section>
-            <section class="tsd-panel tsd-member">
-              <h3 class="tsd-anchor-link" id="providercount">
-                <span>provider<wbr>Count</span
-                ><a href="#providercount" aria-label="Permalink" class="tsd-anchor-icon"
-                  ><svg viewBox="0 0 24 24" aria-hidden="true">
-                    <use href="../assets/icons.svg#icon-anchor"></use>
-                  </svg></a
-                >
-              </h3>
-              <div class="tsd-signature">
-                <span class="tsd-kind-property">providerCount</span><span class="tsd-signature-symbol">:</span>
-                <span class="tsd-signature-type">number</span>
-              </div>
-              <aside class="tsd-sources">
-                <ul>
-                  <li>
-                    Defined in
-                    <a
-                      href="https://github.com/oomol-lab/resource-cache/blob/80bfc388c8ce5d5e5ae426ac3b6a56e13d3067cb/src/oomol.ts#L236"
-                      >oomol.ts:236</a
+                      href="https://github.com/oomol-lab/resource-cache/blob/80bfc388c8ce5d5e5ae426ac3b6a56e13d3067cb/src/oomol.ts#L21"
+                      >oomol.ts:21</a
                     >
                   </li>
                 </ul>
@@ -343,30 +390,30 @@
                   </svg>Properties
                 </summary>
                 <div>
-                  <a href="#actioncount"
+                  <a href="#decode"
                     ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property">
                       <use href="../assets/icons.svg#icon-1024"></use>
-                    </svg><span>action<wbr>Count</span></a
-                  ><a href="#apikeyprovidercount"
+                    </svg><span>decode</span></a
+                  ><a href="#load"
                     ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property">
                       <use href="../assets/icons.svg#icon-1024"></use>
-                    </svg><span>api<wbr>Key<wbr>Provider<wbr>Count</span></a
-                  ><a href="#categorycount"
+                    </svg><span>load</span></a
+                  ><a href="#locale"
                     ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property">
                       <use href="../assets/icons.svg#icon-1024"></use>
-                    </svg><span>category<wbr>Count</span></a
-                  ><a href="#healthyprovidercount"
+                    </svg><span>locale</span></a
+                  ><a href="#maxage"
                     ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property">
                       <use href="../assets/icons.svg#icon-1024"></use>
-                    </svg><span>healthy<wbr>Provider<wbr>Count</span></a
-                  ><a href="#oauthprovidercount"
+                    </svg><span>max<wbr>Age</span></a
+                  ><a href="#schemaversion"
                     ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property">
                       <use href="../assets/icons.svg#icon-1024"></use>
-                    </svg><span>oauth<wbr>Provider<wbr>Count</span></a
-                  ><a href="#providercount"
+                    </svg><span>schema<wbr>Version</span></a
+                  ><a href="#scope"
                     ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property">
                       <use href="../assets/icons.svg#icon-1024"></use>
-                    </svg><span>provider<wbr>Count</span></a
+                    </svg><span>scope</span></a
                   >
                 </div>
               </details>
