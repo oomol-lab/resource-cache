@@ -41,32 +41,33 @@ afterEach(() => {
 });
 
 describe("lifecycle races with storage", () => {
-  it.each([
-    "invalidate",
-    "remove",
-    "clear",
-  ] as const)("%s publishes the new lifetime before host abort listeners retry", async (method) => {
-    const disk = backend();
-    vi.mocked(disk.read).mockResolvedValue(undefined);
-    const pending = deferred<ReturnType<typeof modified<string>>>();
-    const opts = options({ load: vi.fn().mockReturnValueOnce(pending.promise).mockResolvedValue(modified("current")) });
-    const cache = createCache(opts, disk, false);
-    const old = expect(cache.get("q")).rejects.toMatchObject({ name: "AbortError" });
-    await until(() => vi.mocked(opts.load).mock.calls.length === 1);
-    let retry!: Promise<void>;
-    vi.mocked(opts.load).mock.calls[0][1].signal.addEventListener("abort", () => {
-      retry = expect(cache.get("q")).resolves.toBe("current");
-    });
+  it.each(["invalidate", "remove", "clear"] as const)(
+    "%s publishes the new lifetime before host abort listeners retry",
+    async (method) => {
+      const disk = backend();
+      vi.mocked(disk.read).mockResolvedValue(undefined);
+      const pending = deferred<ReturnType<typeof modified<string>>>();
+      const opts = options({
+        load: vi.fn().mockReturnValueOnce(pending.promise).mockResolvedValue(modified("current")),
+      });
+      const cache = createCache(opts, disk, false);
+      const old = expect(cache.get("q")).rejects.toMatchObject({ name: "AbortError" });
+      await until(() => vi.mocked(opts.load).mock.calls.length === 1);
+      let retry!: Promise<void>;
+      vi.mocked(opts.load).mock.calls[0][1].signal.addEventListener("abort", () => {
+        retry = expect(cache.get("q")).resolves.toBe("current");
+      });
 
-    await cache[method]("q");
-    pending.resolve(modified("late"));
-    await old;
-    await retry;
-    expect(opts.load).toHaveBeenCalledTimes(2);
-    expect(vi.mocked(opts.load).mock.calls[1][1].signal.aborted).toBe(false);
-    expect(disk.write).toHaveBeenCalledTimes(1);
-    expect(await cache.peek("q")).toMatchObject({ data: "current", fresh: true });
-  });
+      await cache[method]("q");
+      pending.resolve(modified("late"));
+      await old;
+      await retry;
+      expect(opts.load).toHaveBeenCalledTimes(2);
+      expect(vi.mocked(opts.load).mock.calls[1][1].signal.aborted).toBe(false);
+      expect(disk.write).toHaveBeenCalledTimes(1);
+      expect(await cache.peek("q")).toMatchObject({ data: "current", fresh: true });
+    },
+  );
 
   it("clear cancels only existing lifetimes when an abort listener requests a new key", async () => {
     const disk = backend();

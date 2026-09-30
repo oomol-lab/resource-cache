@@ -286,31 +286,29 @@ describe.each(Object.entries(factories))("%s cache contract", (_name, factory) =
     expect(opts.load).toHaveBeenCalledTimes(1);
   });
 
-  it.each([
-    "invalidate",
-    "remove",
-    "clear",
-    "dispose",
-  ] as const)("%s rejects active and queued calls and blocks an abort-ignoring load", async (method) => {
-    const pending = deferred<LoadResult<string>>();
-    const opts = options({ load: vi.fn(() => pending.promise) });
-    const cache = factory(opts);
-    const canceled = expect(cache.get("q")).rejects.toMatchObject({ name: "AbortError" });
-    await vi.waitFor(() => expect(opts.load).toHaveBeenCalledTimes(1));
-    const queued = expect(cache.get("q", { revalidate: true })).rejects.toMatchObject({ name: "AbortError" });
-    await cache[method]("q");
-    await Promise.all([canceled, queued]);
-    expect(vi.mocked(opts.load).mock.calls[0][1].signal.aborted).toBe(true);
-    pending.resolve(modified("late"));
-    await Promise.resolve();
-    // A new instance observes storage after any late continuation has run.
-    expect(await factory(opts).peek("q")).toBeUndefined();
-    expect(opts.load).toHaveBeenCalledTimes(1);
-    if (method !== "dispose") {
-      vi.mocked(opts.load).mockResolvedValueOnce(modified("current"));
-      expect(await cache.get("q")).toBe("current");
-    }
-  });
+  it.each(["invalidate", "remove", "clear", "dispose"] as const)(
+    "%s rejects active and queued calls and blocks an abort-ignoring load",
+    async (method) => {
+      const pending = deferred<LoadResult<string>>();
+      const opts = options({ load: vi.fn(() => pending.promise) });
+      const cache = factory(opts);
+      const canceled = expect(cache.get("q")).rejects.toMatchObject({ name: "AbortError" });
+      await vi.waitFor(() => expect(opts.load).toHaveBeenCalledTimes(1));
+      const queued = expect(cache.get("q", { revalidate: true })).rejects.toMatchObject({ name: "AbortError" });
+      await cache[method]("q");
+      await Promise.all([canceled, queued]);
+      expect(vi.mocked(opts.load).mock.calls[0][1].signal.aborted).toBe(true);
+      pending.resolve(modified("late"));
+      await Promise.resolve();
+      // A new instance observes storage after any late continuation has run.
+      expect(await factory(opts).peek("q")).toBeUndefined();
+      expect(opts.load).toHaveBeenCalledTimes(1);
+      if (method !== "dispose") {
+        vi.mocked(opts.load).mockResolvedValueOnce(modified("current"));
+        expect(await cache.get("q")).toBe("current");
+      }
+    },
+  );
 
   it("disposal is idempotent and every other method rejects after closing", async () => {
     const cache = factory(options());
@@ -337,37 +335,32 @@ describe.each(Object.entries(factories))("%s cache contract", (_name, factory) =
     expect(await factory(opts).peek("q")).toMatchObject({ data: "one" });
   });
 
-  it.each([
-    "invalidate",
-    "remove",
-    "clear",
-  ] as const)("successful %s allows reuse of another instance's subsequent validation", async (method) => {
-    const opts = options();
-    const a = factory(opts);
-    await a.get("q");
-    await a[method]("q");
-    const b = factory(opts);
-    vi.mocked(opts.load).mockResolvedValueOnce(modified("replacement"));
-    await b.get("q", { revalidate: true });
-    expect(await a.get("q")).toBe("replacement");
-    expect(opts.load).toHaveBeenCalledTimes(2);
-  });
+  it.each(["invalidate", "remove", "clear"] as const)(
+    "successful %s allows reuse of another instance's subsequent validation",
+    async (method) => {
+      const opts = options();
+      const a = factory(opts);
+      await a.get("q");
+      await a[method]("q");
+      const b = factory(opts);
+      vi.mocked(opts.load).mockResolvedValueOnce(modified("replacement"));
+      await b.get("q", { revalidate: true });
+      expect(await a.get("q")).toBe("replacement");
+      expect(opts.load).toHaveBeenCalledTimes(2);
+    },
+  );
 });
 
 describe("factory validation", () => {
   it.each(["", " ", null, 1])("rejects invalid namespace %s", (namespace) => {
     expect(() => createPersistentCache(options({ namespace: namespace as string }))).toThrow(TypeError);
   });
-  it.each([
-    0,
-    -1,
-    1.5,
-    NaN,
-    Infinity,
-    Number.MAX_SAFE_INTEGER + 1,
-  ])("rejects invalid schemaVersion %s", (schemaVersion) => {
-    expect(() => createPersistentCache(options({ schemaVersion }))).toThrow(TypeError);
-  });
+  it.each([0, -1, 1.5, NaN, Infinity, Number.MAX_SAFE_INTEGER + 1])(
+    "rejects invalid schemaVersion %s",
+    (schemaVersion) => {
+      expect(() => createPersistentCache(options({ schemaVersion }))).toThrow(TypeError);
+    },
+  );
   it.each([-1, NaN, Infinity])("rejects invalid maxAge %s", (maxAge) => {
     expect(() => createPersistentCache(options({ maxAge }))).toThrow(TypeError);
   });
