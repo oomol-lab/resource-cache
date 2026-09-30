@@ -1,10 +1,10 @@
 {
-  "name": "@embra/template",
+  "name": "@oomol-lab/resource-cache",
   "version": "0.1.0",
-  "description": "Collection of common utilities.",
+  "description": "Persistent and session-scoped resource caching with freshness tracking and conditional revalidation.",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/embrajs/template.git"
+    "url": "git+https://github.com/oomol-lab/resource-cache.git"
   },
   "type": "module",
   "main": "./dist/index.cjs",
@@ -43,16 +43,16 @@
     "release": "commit-and-tag-version"
   },
   "keywords": [
-    "template"
+    "cache",
+    "resource-cache",
+    "indexeddb",
+    "sessionstorage",
+    "etag",
+    "ttl",
+    "conditional-requests",
+    "typescript"
   ],
-  "maintainers": [
-    {
-      "name": "CRIMX",
-      "email": "straybugs@gmail.com",
-      "url": "https://github.com/crimx/"
-    }
-  ],
-  "license": "MIT",
+  "license": "Apache-2.0",
   "devDependencies": {
     "@biomejs/biome": "^2.4.10",
     "@types/node": "^25.5.0",
