@@ -7,7 +7,21 @@ import {
   type LoadResult,
   type ResourceCache,
 } from "../src/index";
-import type { ActionsResponse, AppCatalogItem, AppCatalogResponse, ProvidersResponse } from "../src/oomol";
+import {
+  type ActionsCache,
+  type ActionsCacheOptions,
+  type ActionsResponse,
+  type AppCatalogItem,
+  type AppCatalogResponse,
+  createActionsCache,
+  createAppCatalogCache,
+  createProvidersCache,
+  getActionsCache,
+  getAppCatalogCache,
+  getProvidersCache,
+  type OomolCacheOptions,
+  type ProvidersResponse,
+} from "../src/oomol";
 
 type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
 type Assert<T extends true> = T;
@@ -135,6 +149,40 @@ export type CatalogStatus = Assert<Equal<AppCatalogItem["status"], "available" |
 export type CatalogHealth = Assert<Equal<AppCatalogItem["healthScore"], number | null | undefined>>;
 export type CatalogCheckTime = Assert<Equal<AppCatalogItem["lastCheckedAt"], string | undefined>>;
 
+const oomolOptions: OomolCacheOptions<ProvidersResponse> = {
+  locale: "en-US",
+  schemaVersion: 1,
+  maxAge: 0,
+  decode: (value) => value as ProvidersResponse,
+  load: async (_query, _validation) => ({ modified: true, data: providers, etag: null }),
+};
+export const providerCache = createProvidersCache(oomolOptions);
+export const sharedProviderCache = getProvidersCache(oomolOptions);
+const actionOptions: ActionsCacheOptions = {
+  ...oomolOptions,
+  decode: (value) => value as ActionsResponse,
+  load: async ({ service }) => ({ modified: true, data: { ...actions, message: service }, etag: null }),
+};
+export const actionCache = createActionsCache(actionOptions);
+export const sharedActionCache = getActionsCache(actionOptions);
+export const appCatalogCache = createAppCatalogCache({
+  ...oomolOptions,
+  decode: (value) => value as AppCatalogResponse,
+  load: async () => ({ modified: true, data: appCatalog, etag: null }),
+});
+export const sharedAppCatalogCache = getAppCatalogCache({
+  ...oomolOptions,
+  decode: (value) => value as AppCatalogResponse,
+  load: async () => ({ modified: true, data: appCatalog, etag: null }),
+});
+export type ProviderCacheReturn = Assert<Equal<ReturnType<typeof providerCache.get>, Promise<ProvidersResponse>>>;
+export type ActionCacheReturn = Assert<
+  Equal<ReturnType<typeof actionCache.peek>, Promise<undefined | CacheSnapshot<ActionsResponse>>>
+>;
+export type ActionCacheShape = Assert<Equal<typeof actionCache, ActionsCache>>;
+export const actionData = actionCache.get("example");
+export type ActionGetReturn = Assert<Equal<typeof actionData, Promise<ActionsResponse>>>;
+
 export const cache = createPersistentCache({
   namespace: "types",
   schemaVersion: 1,
@@ -161,6 +209,8 @@ declare const snapshot: CacheSnapshot<ProvidersResponse>;
 snapshot.etag = null;
 // @ts-expect-error queries retain their inferred shape
 cache.get({ team: "wrong" });
+// @ts-expect-error Actions service is the operation query
+actionCache.get({ service: "example" });
 // @ts-expect-error a modified response requires a complete body and validator
 export const invalidLoad: LoadResult<ProvidersResponse> = { modified: true };
 // @ts-expect-error sessionId is mandatory

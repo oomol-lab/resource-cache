@@ -21,9 +21,18 @@ without browser storage. Build before running `scripts/check-package.mjs` direct
 
 ## Public API and dependencies
 
-Keep cache factories and shared public types in the root entrypoint. Keep OOMOL response types in `/oomol` and maintain
-them when the API response contract changes. Preserve complete successful envelopes, including Providers metadata,
+Keep generic cache factories and shared cache types in the root entrypoint. Keep OOMOL response types and their
+locale-scoped factories in `/oomol`, and maintain them when the API response contract changes. Preserve complete
+successful envelopes, including Providers metadata,
 AppCatalog summary, category and authentication aggregates, sprite metadata, and complete service Action catalogs.
+
+Keep OOMOL factory namespaces stable and include locale in their cache key. Add a new factory only when an endpoint has
+its own response contract. Accept a host-provided non-secret `scope` for environment, user, team, or permission
+boundaries; do not make callers assemble OOMOL namespaces or locale keys. `get*Cache` uses a registry on `globalThis`
+under `Symbol.for("oomol-lab.resource-cache.oomol-singletons")`, keyed by resource, scope, locale, and schema version.
+An Actions cache uses `service` as its per-operation key, so one instance can serve multiple service catalogs. A
+successful `dispose()` removes that registry entry while leaving the old reference closed; `create*Cache` always creates
+an independent instance.
 
 The factories accept host-provided request and decoding functions. Keep framework, HTTP client, and backend runtime
 dependencies out of the package. Storage adapters and serializers are private implementation details; the current

@@ -151,6 +151,49 @@ import type {
 
 Validate these responses in `load` and `decode`.
 
+The OOMOL entry also exports locale-scoped factories. They use fixed namespaces and include `locale` in the cache
+identity, so callers do not need to construct namespace or key strings. Use `getProvidersCache`, `getActionsCache`,
+and `getAppCatalogCache` when the same cache should be shared by the application; use the corresponding `create*`
+function when an independent lifecycle is needed. The first singleton call fixes `load`, `decode`, and `maxAge` for
+that identity; call `dispose()` before creating it again with changed behavior. The singleton registry is shared across
+package copies in the same JavaScript runtime.
+
+```ts
+import { getAppCatalogCache } from '@oomol-lab/resource-cache/oomol'
+
+const apps = getAppCatalogCache({
+  locale: 'zh-CN',
+  schemaVersion: 1,
+  maxAge: 10 * 60_000,
+  decode: decodeAppCatalog,
+  load: ({ locale }, validation) => api.getPublicApps({ locale, ...validation }),
+})
+
+const response = await apps.get()
+```
+
+Use `createProvidersCache` and `createActionsCache` for the other two response types. The locale is fixed when an
+instance is created. An Actions cache accepts the service as the operation query, so one instance can serve multiple
+services:
+
+```ts
+import { getActionsCache } from '@oomol-lab/resource-cache/oomol'
+
+const actions = getActionsCache({
+  locale: 'zh-CN',
+  schemaVersion: 1,
+  maxAge: 10 * 60_000,
+  decode: decodeActions,
+  load: ({ locale, service }, validation) => api.getActions({ locale, service, ...validation }),
+})
+
+const gmail = await actions.get('gmail')
+const calendar = await actions.get('calendar')
+```
+
+Set the optional `scope` when the same browser stores catalogs for different environments, users, teams, or permission
+sets.
+
 ## Contributing
 
 [Development checks and implementation contracts](https://github.com/oomol-lab/resource-cache/blob/main/CONTRIBUTING.md)
