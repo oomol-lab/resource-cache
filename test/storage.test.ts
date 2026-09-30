@@ -208,27 +208,27 @@ describe.each(Object.entries(factories))("%s storage faults", (kind, factory) =>
 });
 
 describe("IndexedDB atomicity and layout", () => {
-  it.each([
-    "remove",
-    "clear",
-  ] as const)("failed %s rolls back partial deletion and keeps a local barrier", async (method) => {
-    const opts = options();
-    const cache = createPersistentCache(opts);
-    await cache.get("q");
-    const original = IDBObjectStore.prototype.delete;
-    const spy = vi
-      .spyOn(IDBObjectStore.prototype, "delete")
-      .mockImplementationOnce(function (this: IDBObjectStore, key) {
-        return original.call(this, key);
-      })
-      .mockImplementationOnce(() => {
-        throw new Error("delete failure");
-      });
-    await expect(cache[method]("q")).rejects.toThrow("delete failure");
-    spy.mockRestore();
-    expect(await cache.peek("q")).toBeUndefined();
-    expect(await createPersistentCache(opts).peek("q")).toMatchObject({ data: "one" });
-  });
+  it.each(["remove", "clear"] as const)(
+    "failed %s rolls back partial deletion and keeps a local barrier",
+    async (method) => {
+      const opts = options();
+      const cache = createPersistentCache(opts);
+      await cache.get("q");
+      const original = IDBObjectStore.prototype.delete;
+      const spy = vi
+        .spyOn(IDBObjectStore.prototype, "delete")
+        .mockImplementationOnce(function (this: IDBObjectStore, key) {
+          return original.call(this, key);
+        })
+        .mockImplementationOnce(() => {
+          throw new Error("delete failure");
+        });
+      await expect(cache[method]("q")).rejects.toThrow("delete failure");
+      spy.mockRestore();
+      expect(await cache.peek("q")).toBeUndefined();
+      expect(await createPersistentCache(opts).peek("q")).toMatchObject({ data: "one" });
+    },
+  );
 
   it("failed invalidation leaves stored validators intact while local data stays stale", async () => {
     const opts = options();
@@ -368,24 +368,24 @@ describe("sessionStorage lifecycle and JSON", () => {
     expect(await createSessionCache(opts).get("q")).toEqual({ restored: "wire" });
   });
 
-  it.each([
-    "remove",
-    "clear",
-  ] as const)("failed %s cannot expose or reuse old storage in the same instance", async (method) => {
-    const opts = options();
-    const cache = factories.session(opts);
-    await cache.get("q");
-    const fail = vi.spyOn(webStorage, "removeItem").mockImplementation(() => {
-      throw new Error("denied");
-    });
-    await expect(cache[method]("q")).rejects.toThrow("denied");
-    expect(await cache.peek("q")).toBeUndefined();
-    expect(await factories.session(opts).peek("q")).toMatchObject({ data: "one" });
-    fail.mockRestore();
-    await cache.get("q");
-    expect(opts.load).toHaveBeenLastCalledWith("q", { etag: null, signal: expect.any(AbortSignal) });
-    expect(await cache.peek("q")).toMatchObject({ fresh: true });
-  });
+  it.each(["remove", "clear"] as const)(
+    "failed %s cannot expose or reuse old storage in the same instance",
+    async (method) => {
+      const opts = options();
+      const cache = factories.session(opts);
+      await cache.get("q");
+      const fail = vi.spyOn(webStorage, "removeItem").mockImplementation(() => {
+        throw new Error("denied");
+      });
+      await expect(cache[method]("q")).rejects.toThrow("denied");
+      expect(await cache.peek("q")).toBeUndefined();
+      expect(await factories.session(opts).peek("q")).toMatchObject({ data: "one" });
+      fail.mockRestore();
+      await cache.get("q");
+      expect(opts.load).toHaveBeenLastCalledWith("q", { etag: null, signal: expect.any(AbortSignal) });
+      expect(await cache.peek("q")).toMatchObject({ fresh: true });
+    },
+  );
 
   it("failed invalidation keeps local data stale even though stored metadata remains fresh", async () => {
     const opts = options();
