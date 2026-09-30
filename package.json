@@ -1,6 +1,6 @@
 {
   "name": "@oomol-lab/resource-cache",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Persistent and session-scoped resource caching with freshness tracking and conditional revalidation.",
   "repository": {
     "type": "git",
