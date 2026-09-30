@@ -6,30 +6,151 @@
 [![Coverage Status](https://oomol-lab.github.io/resource-cache/coverage-badges/@oomol-lab/resource-cache.svg)](https://oomol-lab.github.io/resource-cache/coverage/)
 [![minified-size](https://deno.bundlejs.com/badge?q=@oomol-lab/resource-cache&treeshake=[*])](https://deno.bundlejs.com/?q=@oomol-lab/resource-cache&treeshake=[*])
 
-Persistent and session-scoped resource caching with freshness tracking and conditional revalidation.
+Cache complete responses in IndexedDB or sessionStorage, with expiration and ETag revalidation.
 
 ## Install
 
-```
+```sh
 npm add @oomol-lab/resource-cache
 ```
 
-## Development
+## Usage
 
-### Publish New Version
+```ts
+import { createPersistentCache, type CacheOptions } from '@oomol-lab/resource-cache'
 
-You can use [npm version](https://docs.npmjs.com/cli/v10/commands/npm-version) to bump version.
+type Item = { id: string; name: string }
+type Query = { locale: string }
 
+function decodeItems(value: unknown): Item[] {
+  if (!Array.isArray(value) || !value.every(item =>
+    item !== null && typeof item === 'object' &&
+    typeof item.id === 'string' && typeof item.name === 'string'
+  )) {
+    throw new TypeError('Invalid items response')
+  }
+  return value
+}
+
+const cacheOptions: CacheOptions<Item[], Query> = {
+  namespace: 'production:items',
+  schemaVersion: 1,
+  maxAge: 5 * 60_000,
+  key: ({ locale }) => locale,
+  decode: decodeItems,
+  async load({ locale }, { etag, signal }) {
+    const response = await fetch(`/api/items?locale=${encodeURIComponent(locale)}`, {
+      headers: etag === null ? {} : { 'If-None-Match': etag },
+      signal,
+    })
+    if (response.status === 304) {
+      return { modified: false, etag: response.headers.get('ETag') ?? undefined }
+    }
+    if (!response.ok) throw new Error(`Loading items failed: ${response.status}`)
+    return {
+      modified: true,
+      data: decodeItems(await response.json()),
+      etag: response.headers.get('ETag'),
+    }
+  },
+}
+
+const items = createPersistentCache(cacheOptions)
+const data = await items.get({ locale: 'en' })
 ```
-npm version patch
+
+Use `load` to send requests and validate network responses. Use `decode` to restore stored data.
+Treat returned data as read-only.
+
+| `load` result | Meaning |
+| --- | --- |
+| `{ modified: true, data, etag }` | Replace the complete response and ETag. Use `null` when no ETag is available. |
+| `{ modified: false, etag? }` | Reuse the response associated with the supplied ETag. Omit `etag` to retain it; use `null` to clear it. |
+
+## Options
+
+| Option | Value |
+| --- | --- |
+| `namespace` | Nonblank resource and environment name. |
+| `schemaVersion` | Positive safe integer. Increment for incompatible response or decoding changes. |
+| `maxAge` | Finite nonnegative milliseconds. Zero requires validation on every access. |
+| `key(query)` | Stable string identifying the complete response. |
+| `decode(value)` | Synchronous function that restores stored data; throw to reject an unusable record. |
+| `load(query, { etag, signal })` | Async function returning a complete response or an unmodified result. |
+| `sessionId` | Nonblank, non-secret login identifier, required by `createSessionCache`. |
+
+Choose different namespaces for different data environments. Include locale, user, team, permissions, and filters
+in the key when they affect the response. Caches sharing an identity must use compatible response and decoding contracts.
+Invalid factory options throw `TypeError`.
+
+IndexedDB data must support structured cloning. Session data must survive JSON serialization and restoration through `decode`.
+
+## Read and refresh
+
+| Call | Result |
+| --- | --- |
+| `get(query)` | Return fresh data or await loading. Loading errors reject the call. |
+| `get(query, { revalidate: true })` | Require a new validation, even when cached data is fresh. |
+| `get(query, { signal })` | Cancel this caller's wait with `AbortError`; shared loading continues. |
+| `peek(query)` | Read without loading. Return a snapshot, possibly stale, or `undefined`. |
+
+`maxAge` controls how long a successful response or validation can be reused. An unmodified result retains the cached
+data and refreshes its validation time.
+Returning `modified: false` without cached data rejects as a protocol error.
+
+Concurrent loading of the same key is shared within an instance. A forced call made during an active request waits
+for a subsequent validation. For stale UI display, read with `peek`, then request fresh data with `get`.
+
+Failed storage reads fall back to loading. Successful loads remain available in memory when saving fails.
+
+## Invalidate and clear
+
+| Call | Effect |
+| --- | --- |
+| `invalidate(query)` | Mark stale while retaining data and ETag. |
+| `remove(query)` | Delete data and ETag. |
+| `clear()` | Clear the current namespace, schemaVersion, and sessionId scope. |
+| `dispose()` | Close the instance. Keep IndexedDB data; delete session data for this namespace/sessionId across all schema versions. |
+
+These calls reject affected in-flight `get` and `peek` calls with `AbortError`. Cleanup errors propagate to the caller;
+failed deletion may leave stored data behind. Retry `dispose()` if session cleanup fails. Other methods reject after disposal.
+
+Coordinate invalidation and logout across every affected instance and page. Other instances can retain fresh memory
+or save their own request results after a cleanup.
+
+## Login sessions
+
+```ts
+import { createSessionCache } from '@oomol-lab/resource-cache'
+
+const sessionItems = createSessionCache({ ...cacheOptions, sessionId: loginSessionId })
+
+// On logout:
+await sessionItems.dispose()
 ```
 
-Push the tag to remote and CI will publish the new version to npm.
+Supply `loginSessionId` from the application's login state. Keep it stable across page refreshes within a login and
+choose a new identifier for each new login. Never use an access token. Change the cache scope or invalidate related
+caches when team or permission scope changes.
 
+## OOMOL response types
+
+```ts
+import type {
+  ProvidersResponse,
+  ActionsResponse,
+  AppCatalogResponse,
+} from '@oomol-lab/resource-cache/oomol'
 ```
-git push --follow-tags
-```
 
-### CI Auto Publish
+| Type | Successful response |
+| --- | --- |
+| `ProvidersResponse` | `/v1/providers`, including top-level `meta` and sprite metadata. |
+| `ActionsResponse` | `/v1/actions?service=…`, including the complete service action catalog. |
+| `AppCatalogResponse` | `/public/v1/apps`, including featured actions, availability, catalog aggregates, and sprite metadata. |
 
-If you want to publish the package in CI, you need to enable [trusted publishing](https://docs.npmjs.com/trusted-publishers) in npmjs.com. However, the [settings page](https://www.npmjs.com/package/@oomol-lab/resource-cache/access) is only visible when the package already exists. So you will have to publish the package manually for the first time.
+Validate these responses in `load` and `decode`.
+
+## Contributing
+
+[Development checks and implementation contracts](https://github.com/oomol-lab/resource-cache/blob/main/CONTRIBUTING.md)

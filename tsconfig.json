@@ -13,7 +13,8 @@
     "skipLibCheck": true,
     "strict": true,
     "stripInternal": true,
-    "target": "ESNext"
+    "target": "ESNext",
+    "types": ["node"]
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*", "test/**/*"]
 }

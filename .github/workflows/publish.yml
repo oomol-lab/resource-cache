@@ -37,5 +37,12 @@ jobs:
       - name: Build 🔧
         run: npm run build
 
+      - name: Verify Package
+        run: |
+          npm run lint:ci
+          npm run ts-check
+          npm run test:coverage
+          node scripts/check-package.mjs
+
       - name: Publish Package 🚀
         run: npm publish --provenance --access public

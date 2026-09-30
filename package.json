@@ -20,6 +20,16 @@
         "types": "./dist/index.d.mts",
         "default": "./dist/index.mjs"
       }
+    },
+    "./oomol": {
+      "require": {
+        "types": "./dist/oomol.d.cts",
+        "default": "./dist/oomol.cjs"
+      },
+      "import": {
+        "types": "./dist/oomol.d.mts",
+        "default": "./dist/oomol.mjs"
+      }
     }
   },
   "sideEffects": false,
@@ -40,7 +50,8 @@
     "test:ci": "vitest run --coverage --coverage.reportsDirectory='./docs/coverage'",
     "build": "tsdown",
     "build:min": "MINIFY=true tsdown && echo '' && gzip-size dist/index.mjs dist/index.js",
-    "release": "commit-and-tag-version"
+    "release": "commit-and-tag-version",
+    "test:package": "npm run build && node scripts/check-package.mjs"
   },
   "keywords": [
     "cache",
@@ -59,9 +70,13 @@
     "@vitest/coverage-v8": "^4.1.2",
     "@wopjs/gzip-size": "^0.1.5",
     "commit-and-tag-version": "^12.7.1",
+    "fake-indexeddb": "^6.2.5",
     "tsdown": "^0.21.7",
     "typedoc": "^0.28.18",
     "typescript": "npm:@typescript/typescript6@^6.0.2",
     "vitest": "^4.0.4"
+  },
+  "dependencies": {
+    "idb-keyval": "^6.3.0"
   }
 }

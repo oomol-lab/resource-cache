@@ -5,6 +5,7 @@ export default defineConfig({
   dts: true,
   entry: {
     index: "src/index.ts",
+    oomol: "src/oomol.ts",
   },
   format: ["cjs", "esm"],
   minify: Boolean(process.env.MINIFY),
