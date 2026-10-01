@@ -4,16 +4,21 @@ import {
   type ActionsQuery,
   type ActionsResponse,
   type AppCatalogResponse,
+  type ConnectionsCacheOptions,
+  type ConnectionsQuery,
+  type ConnectionsResponse,
   getActionsCache,
   getAppCatalogCache,
+  getConnectionsCache,
   getProvidersCache,
   type ProvidersCacheOptions,
   type ProvidersResponse,
 } from "../src/oomol";
-import { modified } from "./helpers";
+import { MemoryStorage, modified } from "./helpers";
 
 beforeEach(() => {
   vi.stubGlobal("indexedDB", new IDBFactory());
+  vi.stubGlobal("sessionStorage", new MemoryStorage());
   vi.spyOn(Date, "now").mockReturnValue(1_000);
 });
 afterEach(async () => {
@@ -49,6 +54,52 @@ const apps: AppCatalogResponse = {
   },
 };
 
+const connections: ConnectionsResponse = {
+  success: true,
+  message: "Connections",
+  data: [
+    {
+      id: "gmail-1",
+      service: "gmail",
+      providerAccountId: "account-1",
+      accountLabel: "Work",
+      alias: "work",
+      aliasNormalized: "work",
+      comment: null,
+      scopes: ["mail.read"],
+      status: "active",
+      createdAt: 1,
+      updatedAt: 2,
+      userId: "user-1",
+      createdByUserId: "user-1",
+      ownerType: "team",
+      ownerTeamId: "team-1",
+      authType: "oauth2",
+      providerScopes: ["mail.read"],
+      displayName: "Gmail / Work",
+      isDefault: true,
+      credentialFields: [{ key: "account", label: "Account", displayValue: "work@example.com", secret: false }],
+      credentialSummary: {
+        authType: "api_key",
+        fields: { apiKey: { configured: true, maskedValue: "••••" } },
+      },
+      triggerCallbackUrls: [{ service: "gmail", deliveryMode: "push", url: "https://example.com/callback" }],
+      marketplace: { id: "gmail", pricing: "free" },
+    },
+  ],
+  meta: {
+    summary: {
+      providerCount: 1,
+      connectableProviderCount: 1,
+      connectedProviderCount: 1,
+      activeConnectedProviderCount: 1,
+      connectedAppCount: 1,
+      activeConnectedAppCount: 1,
+      filteredAppCount: 1,
+    },
+  },
+};
+
 function options<T>(data: T) {
   return {
     environment: "production",
@@ -57,6 +108,19 @@ function options<T>(data: T) {
     maxAge: 100,
     decode: vi.fn((value) => value as T),
     load: vi.fn(async (_query: { locale: string }, _validation: unknown) => modified(data)),
+  };
+}
+
+function connectionOptions(overrides: Partial<ConnectionsCacheOptions> = {}) {
+  return {
+    environment: "production",
+    sessionId: "session-a",
+    teamName: "team/a",
+    schemaVersion: 1,
+    maxAge: 100,
+    decode: vi.fn((value) => value as ConnectionsResponse),
+    load: vi.fn(async (_query: ConnectionsQuery, _validation: unknown) => modified(connections)),
+    ...overrides,
   };
 }
 
@@ -223,5 +287,84 @@ describe("OOMOL cache factories", () => {
     expect(getAppCatalogCache(appOptions)).toBe(getAppCatalogCache({ ...appOptions }));
     await gmail.dispose();
     await getAppCatalogCache(appOptions).dispose();
+  });
+
+  it("caches Connections in sessionStorage and revalidates with its ETag", async () => {
+    const opts = connectionOptions();
+    const cache = getConnectionsCache(opts);
+
+    expect(await cache.get()).toEqual(connections);
+    expect(opts.load).toHaveBeenCalledWith({ teamName: "team/a" }, { etag: null, signal: expect.any(AbortSignal) });
+    expect(opts.decode).not.toHaveBeenCalled();
+    expect(await getConnectionsCache(opts).get()).toEqual(connections);
+    expect(opts.load).toHaveBeenCalledTimes(1);
+
+    vi.mocked(opts.load).mockResolvedValueOnce({ modified: false });
+    expect(await cache.get(undefined, { revalidate: true })).toEqual(connections);
+    expect(opts.load).toHaveBeenLastCalledWith(
+      { teamName: "team/a" },
+      { etag: '"v1"', signal: expect.any(AbortSignal) },
+    );
+    expect(await cache.peek()).toMatchObject({ data: connections, etag: '"v1"' });
+  });
+
+  it("isolates Connections by session, team, environment and schema", async () => {
+    const opts = connectionOptions();
+    const team = getConnectionsCache(opts);
+    expect(getConnectionsCache({ ...opts })).toBe(team);
+    expect(getConnectionsCache({ ...opts, teamName: "team/b" })).not.toBe(team);
+    expect(getConnectionsCache({ ...opts, sessionId: "session-b" })).not.toBe(team);
+    expect(getConnectionsCache({ ...opts, environment: "staging" })).not.toBe(team);
+    expect(getConnectionsCache({ ...opts, schemaVersion: 2 })).not.toBe(team);
+
+    await team.get();
+    expect(await getConnectionsCache({ ...opts, teamName: "team/b" }).peek()).toBeUndefined();
+    expect(await getConnectionsCache({ ...opts, sessionId: "session-b" }).peek()).toBeUndefined();
+    expect(await getConnectionsCache({ ...opts, environment: "staging" }).peek()).toBeUndefined();
+    expect(await getConnectionsCache({ ...opts, schemaVersion: 2 }).peek()).toBeUndefined();
+  });
+
+  it("disposes every team scope for one session without touching another session", async () => {
+    const personal = getConnectionsCache({ ...connectionOptions(), teamName: undefined });
+    const team = getConnectionsCache(connectionOptions());
+    const otherSession = getConnectionsCache({ ...connectionOptions(), sessionId: "session-b" });
+    await personal.get();
+    await team.get();
+    await otherSession.get();
+
+    const storage = globalThis.sessionStorage as MemoryStorage;
+    expect(storage.length).toBe(3);
+    await team.dispose();
+    expect(storage.length).toBe(1);
+    expect(storage.values.keys().next().value).toContain('"session-b"');
+  });
+
+  it("rejects invalid Connections session and team options", () => {
+    const opts = connectionOptions();
+    expect(() => getConnectionsCache({ ...opts, sessionId: " " })).toThrow("sessionId must be nonempty");
+    expect(() => getConnectionsCache({ ...opts, sessionId: null } as unknown as ConnectionsCacheOptions)).toThrow(
+      "sessionId must be nonempty",
+    );
+    expect(() => getConnectionsCache({ ...opts, teamName: " " })).toThrow("teamName must be nonempty");
+    expect(() => getConnectionsCache({ ...opts, teamName: 1 } as unknown as ConnectionsCacheOptions)).toThrow(
+      "teamName must be nonempty",
+    );
+    expect(() => getConnectionsCache({ ...opts, load: null } as unknown as ConnectionsCacheOptions)).toThrow(
+      "load must be a function",
+    );
+  });
+
+  it("retries singleton disposal after sessionStorage cleanup fails", async () => {
+    const failingStorage = new MemoryStorage();
+    failingStorage.removeItem = () => {
+      throw new Error("denied");
+    };
+    vi.stubGlobal("sessionStorage", failingStorage);
+    const cache = getConnectionsCache(connectionOptions());
+    await cache.get();
+    await expect(cache.dispose()).rejects.toThrow("denied");
+
+    vi.stubGlobal("sessionStorage", new MemoryStorage());
+    await cache.dispose();
   });
 });

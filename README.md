@@ -140,6 +140,7 @@ import type {
   ProvidersResponse,
   ActionsResponse,
   AppCatalogResponse,
+  ConnectionsResponse,
 } from '@oomol-lab/resource-cache/oomol'
 ```
 
@@ -148,17 +149,17 @@ import type {
 | `ProvidersResponse` | `/v1/providers`, including top-level `meta` and sprite metadata. |
 | `ActionsResponse` | `/v1/actions?service=…`, including the complete service action catalog. |
 | `AppCatalogResponse` | `/public/v1/apps`, including featured actions, availability, catalog aggregates, and sprite metadata. |
+| `ConnectionsResponse` | `/v1/connections`, including connection app views and summary metadata. |
 
 Validate these responses in `load` and `decode`.
 
 The OOMOL entry exports separate configuration types, `ProvidersCacheOptions`, `ActionsCacheOptions`, and
-`AppCatalogCacheOptions`, for the three catalog factories. All three
-factories serve catalog data shared across accounts, teams and flows. They use
-fixed namespaces and include `environment` and `locale` (and, for Actions, `service`) in the cache identity, so
-callers do not need to construct namespace or key strings. `environment` defaults to `production` and can be set to
-values such as `staging` when the host serves a separate deployment. A request may still require an access token. Keep
-that token in the Providers or Actions request layer inside `load`; App Catalog is public and does not require
-credentials. Credentials must not be used as a cache key, namespace, or environment value.
+`AppCatalogCacheOptions`, for the three catalog factories. These factories serve catalog data shared across accounts,
+teams and flows. They use fixed namespaces and include `environment` and `locale` (and, for Actions, `service`) in the
+cache identity, so callers do not need to construct namespace or key strings. `environment` defaults to `production`
+and can be set to values such as `staging` when the host serves a separate deployment. A request may still require an
+access token. Keep that token in the Providers or Actions request layer inside `load`; App Catalog is public and does
+not require credentials. Credentials must not be used as a cache key, namespace, or environment value.
 
 Use `getProvidersCache`, `getActionsCache`, and `getAppCatalogCache`. They return the shared cache for an environment,
 locale and schema version. The first call fixes `load`, `decode`, and `maxAge` for that identity; provide a stable
@@ -197,9 +198,30 @@ const gmail = await actions.get('gmail')
 const calendar = await actions.get('calendar')
 ```
 
-Do not add account, team, flow, permission, or token values to these OOMOL cache options. If a future endpoint returns
-different catalog content for one of those dimensions, use the generic cache API and put that response dimension in
-its key instead.
+Connections are scoped to a login session and use `sessionStorage`. The required `sessionId` must be a stable,
+non-secret login identifier, never an access token. `teamName` is optional for the personal scope and is part of the
+cache identity when provided. Call `dispose()` when the session ends; it removes all connection scopes for that login
+session.
+
+```ts
+import { getConnectionsCache } from '@oomol-lab/resource-cache/oomol'
+
+const connections = getConnectionsCache({
+  environment: 'production',
+  sessionId: loginSessionId,
+  teamName: currentTeamName,
+  schemaVersion: 1,
+  maxAge: 60_000,
+  decode: decodeConnections,
+  load: ({ teamName }, validation) => api.getConnections({ teamName, ...validation }),
+})
+
+const response = await connections.get()
+await connections.dispose() // on logout
+```
+
+Use the generic cache API for account- or permission-specific endpoints that do not match the Connections response
+contract.
 
 ## Contributing
 

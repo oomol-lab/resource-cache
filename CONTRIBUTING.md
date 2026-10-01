@@ -22,22 +22,24 @@ without browser storage. Build before running `scripts/check-package.mjs` direct
 ## Public API and dependencies
 
 Keep generic cache factories and shared cache types in the root entrypoint. Keep OOMOL response types and their
-environment-and-locale-keyed factories in `/oomol`, and maintain them when the API response contract changes. Preserve complete
+environment-and-response-keyed factories in `/oomol`, and maintain them when the API response contract changes. Preserve complete
 successful envelopes, including Providers metadata, AppCatalog summary, category and authentication aggregates, sprite
-metadata, and complete service Action catalogs.
+metadata, complete service Action catalogs, and Connections summary metadata.
 
-Keep OOMOL factory namespaces stable and include deployment environment and locale in their cache identity. Add a new
+Keep OOMOL factory namespaces stable and include deployment environment and the response scope in their cache identity. Add a new
 factory only when an endpoint has its own response contract. Providers, Actions and App Catalog responses are shared
 catalog data, so their cache identity must not include account, team, flow, permission, or token values. A request may
 require authentication for Providers or Actions; keep that concern in those factories' `load` functions. App Catalog
 is public and does not require credentials. Do not make callers assemble OOMOL namespaces or locale keys. The optional
 `environment` defaults to `production` and is reserved for deployment boundaries such as `staging`.
 `get*Cache` uses a registry on `globalThis` under
-`Symbol.for("oomol-lab.resource-cache.oomol-singletons")`, keyed by resource, environment, locale, and schema
+`Symbol.for("oomol-lab.resource-cache.oomol-singletons")`, keyed by resource, environment, response scope, and schema
 version. An Actions cache uses `service` as its per-operation key, so one instance can serve multiple service catalogs.
+A Connections cache is account-scoped: it uses sessionStorage, requires a non-secret `sessionId`, and includes the
+optional `teamName` in its identity. Its `dispose()` removes all Connections schema versions for that session.
 A successful `dispose()` removes that registry entry while leaving the old reference closed. Keep the OOMOL surface to
-the shared `get*Cache` functions; use the generic cache API when a different endpoint genuinely returns account- or
-permission-specific data.
+the shared `get*Cache` functions; use the generic cache API when a different endpoint genuinely returns an account- or
+permission-specific response contract.
 
 The factories accept host-provided request and decoding functions. Keep framework, HTTP client, and backend runtime
 dependencies out of the package. Storage adapters and serializers are private implementation details; the current

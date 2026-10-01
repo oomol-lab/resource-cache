@@ -14,8 +14,12 @@ import {
   type AppCatalogCacheOptions,
   type AppCatalogItem,
   type AppCatalogResponse,
+  type ConnectionsCache,
+  type ConnectionsCacheOptions,
+  type ConnectionsResponse,
   getActionsCache,
   getAppCatalogCache,
+  getConnectionsCache,
   getProvidersCache,
   type ProvidersCacheOptions,
   type ProvidersResponse,
@@ -143,6 +147,44 @@ export const minimalAppCatalog = {
   },
 } satisfies AppCatalogResponse;
 
+export const connections = {
+  success: true,
+  message: "OK",
+  data: [
+    {
+      id: "example-connection",
+      service: "example",
+      providerAccountId: "account-1",
+      accountLabel: "Example",
+      alias: null,
+      aliasNormalized: null,
+      comment: null,
+      scopes: ["read"],
+      status: "active",
+      createdAt: 1,
+      updatedAt: 2,
+      userId: "user-1",
+      createdByUserId: "user-1",
+      ownerType: "team",
+      ownerTeamId: "team-1",
+      authType: "oauth2",
+      displayName: "Example",
+      isDefault: true,
+    },
+  ],
+  meta: {
+    summary: {
+      providerCount: 1,
+      connectableProviderCount: 1,
+      connectedProviderCount: 1,
+      activeConnectedProviderCount: 1,
+      connectedAppCount: 1,
+      activeConnectedAppCount: 1,
+      filteredAppCount: 1,
+    },
+  },
+} satisfies ConnectionsResponse;
+
 export type CatalogStatus = Assert<Equal<AppCatalogItem["status"], "available" | "degraded" | "incident" | "unknown">>;
 export type CatalogHealth = Assert<Equal<AppCatalogItem["healthScore"], number | null | undefined>>;
 export type CatalogCheckTime = Assert<Equal<AppCatalogItem["lastCheckedAt"], string | undefined>>;
@@ -176,6 +218,20 @@ const appCatalogOptions: AppCatalogCacheOptions = {
 };
 export const appCatalogCache = getAppCatalogCache(appCatalogOptions);
 export const sharedAppCatalogCache = getAppCatalogCache(appCatalogOptions);
+const connectionsOptions: ConnectionsCacheOptions = {
+  environment: "production",
+  sessionId: "session-1",
+  teamName: "team-1",
+  schemaVersion: 1,
+  maxAge: 0,
+  decode: (value) => value as ConnectionsResponse,
+  load: async ({ teamName }, { etag, signal }) =>
+    signal.aborted
+      ? { modified: false, etag }
+      : { modified: true, data: { ...connections, message: teamName ?? "personal" }, etag: null },
+};
+export const connectionsCache = getConnectionsCache(connectionsOptions);
+export const sharedConnectionsCache = getConnectionsCache(connectionsOptions);
 export type ProviderCacheReturn = Assert<Equal<ReturnType<typeof providerCache.get>, Promise<ProvidersResponse>>>;
 export type ActionCacheReturn = Assert<
   Equal<ReturnType<typeof actionCache.peek>, Promise<undefined | CacheSnapshot<ActionsResponse>>>
@@ -183,6 +239,8 @@ export type ActionCacheReturn = Assert<
 export type ActionCacheShape = Assert<Equal<typeof actionCache, ActionsCache>>;
 export const actionData = actionCache.get("example");
 export type ActionGetReturn = Assert<Equal<typeof actionData, Promise<ActionsResponse>>>;
+export type ConnectionsCacheShape = Assert<Equal<typeof connectionsCache, ConnectionsCache>>;
+export type ConnectionsGetReturn = Assert<Equal<ReturnType<typeof connectionsCache.get>, Promise<ConnectionsResponse>>>;
 
 export const cache = createPersistentCache({
   namespace: "types",
@@ -234,3 +292,6 @@ export const serviceIndex: ActionsResponse = { success: true, message: "OK", dat
 export const incompleteCatalogMeta: AppCatalogResponse["meta"] = { summary: appCatalog.meta.summary };
 // @ts-expect-error catalog items require action counts and featured actions in addition to provider identity
 export const incompleteCatalogItem: AppCatalogItem = providers.data[0];
+
+// @ts-expect-error ConnectionsResponse must retain complete summary metadata
+export const incompleteConnectionsMeta: ConnectionsResponse = { success: true, message: "OK", data: [] };

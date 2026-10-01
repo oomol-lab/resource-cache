@@ -1,4 +1,4 @@
-import { createPersistentCache } from "./index";
+import { createPersistentCache, createSessionCache } from "./index";
 import type { CacheOptions, CacheValidation, LoadResult, ResourceCache } from "./types";
 
 /** Namespaces reserved for the OOMOL response factories. */
@@ -6,6 +6,7 @@ export const oomolNamespaces = {
   providers: "oomol:providers",
   actions: "oomol:actions",
   appCatalog: "oomol:app-catalog",
+  connections: "oomol:connections",
 } as const;
 
 export interface OomolQuery {
@@ -14,6 +15,10 @@ export interface OomolQuery {
 
 export interface ActionsQuery extends OomolQuery {
   readonly service: string;
+}
+
+export interface ConnectionsQuery {
+  readonly teamName?: string;
 }
 
 interface OomolCacheBaseOptions<T> {
@@ -41,12 +46,27 @@ export interface AppCatalogCacheOptions extends OomolCacheBaseOptions<AppCatalog
   readonly load: (query: OomolQuery, validation: CacheValidation) => Promise<LoadResult<AppCatalogResponse>>;
 }
 
+export interface ConnectionsCacheOptions {
+  /** Deployment environment used to separate hosts such as production and staging. Defaults to `production`. */
+  readonly environment?: string;
+  /** Nonempty, non-secret identifier for the current login session. */
+  readonly sessionId: string;
+  /** Team scope sent to the host loader. Omit it for the personal scope. */
+  readonly teamName?: string;
+  readonly schemaVersion: number;
+  readonly maxAge: number;
+  readonly decode: (value: unknown) => ConnectionsResponse;
+  /** Load the connection list; request credentials belong in the host request layer. */
+  readonly load: (query: ConnectionsQuery, validation: CacheValidation) => Promise<LoadResult<ConnectionsResponse>>;
+}
+
 type OomolFactoryOptions<T> = OomolCacheBaseOptions<T> & {
   readonly load: (query: OomolQuery, validation: CacheValidation) => Promise<LoadResult<T>>;
 };
 
 export type OomolCache<T> = ResourceCache<T, void>;
 export type ActionsCache = ResourceCache<ActionsResponse, string>;
+export type ConnectionsCache = ResourceCache<ConnectionsResponse, void>;
 
 type SingletonRegistry = Map<string, ResourceCache<unknown, unknown>>;
 
@@ -74,6 +94,24 @@ function createOomolCache<T>(resource: string, options: OomolFactoryOptions<T>, 
   return createPersistentCache(cacheOptions);
 }
 
+function createConnectionsCacheInternal(
+  options: ConnectionsCacheOptions,
+  validated: { environment: string; teamName?: string },
+): ConnectionsCache {
+  const { environment, teamName } = validated;
+  const { load } = options;
+  const key = JSON.stringify([teamName ?? null]);
+  return createSessionCache({
+    namespace: JSON.stringify([oomolNamespaces.connections, environment]),
+    schemaVersion: options.schemaVersion,
+    maxAge: options.maxAge,
+    sessionId: options.sessionId,
+    key: () => key,
+    decode: options.decode,
+    load: (_query, validation) => load({ teamName }, validation),
+  });
+}
+
 function validateOomolOptions(options: {
   readonly environment?: unknown;
   readonly locale?: unknown;
@@ -89,6 +127,26 @@ function normalizeEnvironment(value: unknown): string {
   const environment = value === undefined ? "production" : value;
   if (typeof environment !== "string" || !environment.trim()) throw new TypeError("environment must be nonempty");
   return environment;
+}
+
+function normalizeTeamName(value: unknown): string | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value !== "string" || !value.trim()) throw new TypeError("teamName must be nonempty");
+  return value;
+}
+
+function validateConnectionsOptions(options: {
+  readonly environment?: unknown;
+  readonly sessionId?: unknown;
+  readonly teamName?: unknown;
+  readonly load?: unknown;
+}): { environment: string; teamName?: string } {
+  const environment = normalizeEnvironment(options.environment);
+  if (typeof options.sessionId !== "string" || !options.sessionId.trim())
+    throw new TypeError("sessionId must be nonempty");
+  const teamName = normalizeTeamName(options.teamName);
+  if (typeof options.load !== "function") throw new TypeError("load must be a function");
+  return { environment, teamName };
 }
 
 /** Create an IndexedDB cache for the account-independent GET /v1/providers response, keyed by environment and locale. */
@@ -120,11 +178,14 @@ function createAppCatalogCacheInternal(options: AppCatalogCacheOptions): OomolCa
 
 function singletonKey(
   resource: string,
-  options: Pick<OomolCacheBaseOptions<unknown>, "environment" | "schemaVersion">,
-  query: OomolQuery,
+  options: { readonly environment?: string; readonly schemaVersion: number },
+  query: unknown,
+  sessionId?: string,
 ): string {
   const environment = normalizeEnvironment(options.environment);
-  return JSON.stringify([resource, environment, options.schemaVersion, query]);
+  return sessionId === undefined
+    ? JSON.stringify([resource, environment, options.schemaVersion, query])
+    : JSON.stringify([resource, environment, options.schemaVersion, sessionId, query]);
 }
 
 function getSingleton<T, Q>(key: string, create: () => ResourceCache<T, Q>): ResourceCache<T, Q> {
@@ -137,9 +198,15 @@ function getSingleton<T, Q>(key: string, create: () => ResourceCache<T, Q>): Res
     ...cache,
     dispose() {
       if (!disposal) {
-        disposal = cache.dispose().then(() => {
-          singletonCaches.delete(key);
-        });
+        disposal = cache.dispose().then(
+          () => {
+            singletonCaches.delete(key);
+          },
+          (error) => {
+            disposal = undefined;
+            throw error;
+          },
+        );
       }
       return disposal;
     },
@@ -167,6 +234,15 @@ export function getAppCatalogCache(options: AppCatalogCacheOptions): OomolCache<
   const query = { locale: options.locale };
   return getSingleton(singletonKey(oomolNamespaces.appCatalog, options, query), () =>
     createAppCatalogCacheInternal(options),
+  );
+}
+
+/** Return the shared sessionStorage cache for one login session and team scope. */
+export function getConnectionsCache(options: ConnectionsCacheOptions): ConnectionsCache {
+  const validated = validateConnectionsOptions(options);
+  const query = { teamName: validated.teamName };
+  return getSingleton(singletonKey(oomolNamespaces.connections, options, query, options.sessionId), () =>
+    createConnectionsCacheInternal(options, validated),
   );
 }
 
@@ -271,4 +347,79 @@ export interface AppCatalogResponse {
     authTypes: { id: CredentialAuthType; displayName: string; providerCount: number }[];
     iconSprite: ProviderIconSprite | null;
   };
+}
+
+export type ConnectionStatus = "active" | "reauth_required" | "error" | "disconnected";
+export type ConnectionAuthType = CredentialAuthType | "marketplace";
+
+export interface ConnectionCredentialField {
+  key: string;
+  label: string;
+  displayValue: string;
+  secret: boolean;
+}
+
+export interface ConnectionCredentialSummary {
+  authType: "api_key" | "custom_credential";
+  fields: Record<
+    string,
+    {
+      configured: boolean;
+      displayValue?: string;
+      maskedValue?: string;
+    }
+  >;
+}
+
+export interface ConnectionTriggerCallbackUrl {
+  service: string;
+  deliveryMode: "push";
+  url: string;
+}
+
+export interface ConnectionAppRecord {
+  id: string;
+  service: string;
+  providerAccountId: string;
+  accountLabel: string;
+  alias: string | null;
+  aliasNormalized: string | null;
+  comment: string | null;
+  scopes: string[];
+  status: ConnectionStatus;
+  createdAt: number;
+  updatedAt: number;
+  userId: string;
+  createdByUserId: string;
+  ownerType: "team";
+  ownerTeamId: string;
+  authType: ConnectionAuthType | null;
+  providerScopes?: string[];
+  displayName: string;
+  isDefault: boolean;
+  credentialFields?: ConnectionCredentialField[];
+  credentialSummary?: ConnectionCredentialSummary;
+  triggerCallbackUrls?: ConnectionTriggerCallbackUrl[];
+  marketplace?: {
+    id: string;
+    pricing: "free" | "metered";
+  };
+}
+
+export interface ConnectionsSummary {
+  providerCount: number;
+  connectableProviderCount: number;
+  connectedProviderCount: number;
+  activeConnectedProviderCount: number;
+  connectedAppCount: number;
+  activeConnectedAppCount: number;
+  filteredAppCount: number;
+}
+
+/** Complete GET /v1/connections success response, including connection summary metadata. */
+export interface ConnectionsResponse {
+  success: true;
+  message: string;
+  data: ConnectionAppRecord[];
+  meta: { summary: ConnectionsSummary };
 }

@@ -61,7 +61,7 @@ import * as oomol from "@oomol-lab/resource-cache/oomol";
 const require = createRequire(import.meta.url);
 const cjs = require("@oomol-lab/resource-cache");
 const oomolKeys = [
-  "getActionsCache", "getAppCatalogCache", "getProvidersCache", "oomolNamespaces",
+  "getActionsCache", "getAppCatalogCache", "getConnectionsCache", "getProvidersCache", "oomolNamespaces",
 ];
 assert.deepEqual(Object.keys(oomol).sort(), oomolKeys);
 assert.deepEqual(Object.keys(require("@oomol-lab/resource-cache/oomol")).sort(), oomolKeys);
