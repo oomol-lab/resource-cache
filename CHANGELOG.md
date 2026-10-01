@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.1.3](https://github.com/oomol-lab/resource-cache/compare/v0.1.2...v0.1.3) (2026-10-01)
+
+### Features
+
+* replace teamName with ownerId in Connections cache implementation ([96a88d4](https://github.com/oomol-lab/resource-cache/commit/96a88d479d81d7f0ca83094f4b4986a54fc52f58))
+
 ## [0.1.2](https://github.com/oomol-lab/resource-cache/compare/v0.1.1...v0.1.2) (2026-10-01)
 
 ### Features
