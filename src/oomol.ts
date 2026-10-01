@@ -70,6 +70,11 @@ export type ConnectionsCache = ResourceCache<ConnectionsResponse, void>;
 
 type SingletonRegistry = Map<string, ResourceCache<unknown, unknown>>;
 
+/** Join identity fields without nesting JSON in the storage key. */
+function readableKey(...parts: Array<string | number>): string {
+  return parts.map((part) => encodeURIComponent(String(part)).replaceAll("%3A", ":")).join("/");
+}
+
 const singletonRegistrySymbol = Symbol.for("oomol-lab.resource-cache.oomol-singletons");
 const singletonCaches =
   (Reflect.get(globalThis, singletonRegistrySymbol) as SingletonRegistry | undefined) ??
@@ -82,9 +87,9 @@ const singletonCaches =
 function createOomolCache<T>(resource: string, options: OomolFactoryOptions<T>, query: OomolQuery): OomolCache<T> {
   const environment = validateOomolOptions(options);
   const { load } = options;
-  const key = JSON.stringify(query);
+  const key = readableKey(query.locale);
   const cacheOptions: CacheOptions<T, void> = {
-    namespace: JSON.stringify([resource, environment]),
+    namespace: readableKey(resource, environment),
     schemaVersion: options.schemaVersion,
     maxAge: options.maxAge,
     key: () => key,
@@ -100,9 +105,9 @@ function createConnectionsCacheInternal(
 ): ConnectionsCache {
   const { environment, ownerId } = validated;
   const { load } = options;
-  const key = JSON.stringify([ownerId]);
+  const key = readableKey(ownerId);
   return createSessionCache({
-    namespace: JSON.stringify([oomolNamespaces.connections, environment]),
+    namespace: readableKey(oomolNamespaces.connections, environment),
     schemaVersion: options.schemaVersion,
     maxAge: options.maxAge,
     sessionId: options.sessionId,
@@ -158,12 +163,12 @@ function createActionsCacheInternal(options: ActionsCacheOptions): ActionsCache 
   const environment = validateOomolOptions(options);
   const { locale, load } = options;
   return createPersistentCache<ActionsResponse, string>({
-    namespace: JSON.stringify([oomolNamespaces.actions, environment]),
+    namespace: readableKey(oomolNamespaces.actions, environment),
     schemaVersion: options.schemaVersion,
     maxAge: options.maxAge,
     key: (service) => {
       if (typeof service !== "string" || !service.trim()) throw new TypeError("service must be nonempty");
-      return JSON.stringify([locale, service]);
+      return readableKey(locale, service);
     },
     decode: options.decode,
     load: (service, validation) => load({ locale, service }, validation),
@@ -178,13 +183,13 @@ function createAppCatalogCacheInternal(options: AppCatalogCacheOptions): OomolCa
 function singletonKey(
   resource: string,
   options: { readonly environment?: string; readonly schemaVersion: number },
-  query: unknown,
+  query: readonly (string | number)[],
   sessionId?: string,
 ): string {
   const environment = normalizeEnvironment(options.environment);
   return sessionId === undefined
-    ? JSON.stringify([resource, environment, options.schemaVersion, query])
-    : JSON.stringify([resource, environment, options.schemaVersion, sessionId, query]);
+    ? readableKey(resource, environment, options.schemaVersion, ...query)
+    : readableKey(resource, environment, options.schemaVersion, sessionId, ...query);
 }
 
 function getSingleton<T, Q>(key: string, create: () => ResourceCache<T, Q>): ResourceCache<T, Q> {
@@ -217,7 +222,7 @@ function getSingleton<T, Q>(key: string, create: () => ResourceCache<T, Q>): Res
 /** Return the shared Providers cache for one environment, locale and schema version. */
 export function getProvidersCache(options: ProvidersCacheOptions): OomolCache<ProvidersResponse> {
   const query = { locale: options.locale };
-  return getSingleton(singletonKey(oomolNamespaces.providers, options, query), () =>
+  return getSingleton(singletonKey(oomolNamespaces.providers, options, [query.locale]), () =>
     createProvidersCacheInternal(options),
   );
 }
@@ -225,13 +230,15 @@ export function getProvidersCache(options: ProvidersCacheOptions): OomolCache<Pr
 /** Return the shared Actions cache for one environment, locale and schema version. */
 export function getActionsCache(options: ActionsCacheOptions): ActionsCache {
   const query = { locale: options.locale };
-  return getSingleton(singletonKey(oomolNamespaces.actions, options, query), () => createActionsCacheInternal(options));
+  return getSingleton(singletonKey(oomolNamespaces.actions, options, [query.locale]), () =>
+    createActionsCacheInternal(options),
+  );
 }
 
 /** Return the shared App Catalog cache for one environment, locale and schema version. */
 export function getAppCatalogCache(options: AppCatalogCacheOptions): OomolCache<AppCatalogResponse> {
   const query = { locale: options.locale };
-  return getSingleton(singletonKey(oomolNamespaces.appCatalog, options, query), () =>
+  return getSingleton(singletonKey(oomolNamespaces.appCatalog, options, [query.locale]), () =>
     createAppCatalogCacheInternal(options),
   );
 }
@@ -240,7 +247,7 @@ export function getAppCatalogCache(options: AppCatalogCacheOptions): OomolCache<
 export function getConnectionsCache(options: ConnectionsCacheOptions): ConnectionsCache {
   const validated = validateConnectionsOptions(options);
   const query = { ownerId: validated.ownerId };
-  return getSingleton(singletonKey(oomolNamespaces.connections, options, query, options.sessionId), () =>
+  return getSingleton(singletonKey(oomolNamespaces.connections, options, [query.ownerId], options.sessionId), () =>
     createConnectionsCacheInternal(options, validated),
   );
 }

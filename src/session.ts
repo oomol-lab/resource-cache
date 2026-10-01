@@ -1,8 +1,8 @@
-import { metadata, type StorageBackend, scope, stored } from "./storage";
+import { metadata, type StorageBackend, sessionScope, stored } from "./storage";
 
 /** @internal */
 export function sessionStorageBackend(namespace: string, schemaVersion: number, sessionId: string): StorageBackend {
-  const base = `${scope(namespace, sessionId)}:`;
+  const base = `${sessionScope(namespace, sessionId)}:`;
   const prefix = `${base}${schemaVersion}:`;
   const identity = (key: string) => prefix + JSON.stringify(key);
   const record = (key: string) => {

@@ -62,7 +62,12 @@ export function stored(meta: Metadata, body: unknown): CompleteStored | undefine
 
 export const storagePrefix = "@oomol-lab/resource-cache:";
 
-/** JSON arrays delimit identity fields without ambiguous string concatenation. @internal */
-export function scope(namespace: string, sessionId?: string): string {
+/** Delimit identity fields without ambiguous string concatenation. @internal */
+export function scope(namespace: string): string {
+  return storagePrefix + JSON.stringify(namespace);
+}
+
+/** @internal */
+export function sessionScope(namespace: string, sessionId: string): string {
   return storagePrefix + JSON.stringify([namespace, sessionId]);
 }
