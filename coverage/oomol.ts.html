@@ -25,14 +25,14 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>78/78</span>
+                <span class='fraction'>76/76</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>38/38</span>
+                <span class='fraction'>34/34</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>69/69</span>
+                <span class='fraction'>68/68</span>
             </div>
         
             
@@ -487,8 +487,7 @@
 <a name='L422'></a><a href='#L422'>422</a>
 <a name='L423'></a><a href='#L423'>423</a>
 <a name='L424'></a><a href='#L424'>424</a>
-<a name='L425'></a><a href='#L425'>425</a>
-<a name='L426'></a><a href='#L426'>426</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L425'></a><a href='#L425'>425</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -621,8 +620,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">19x</span>
-<span class="cline-any cline-yes">18x</span>
-<span class="cline-any cline-yes">16x</span>
+<span class="cline-any cline-yes">17x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -933,7 +931,7 @@ export interface ActionsQuery extends OomolQuery {
 }
 &nbsp;
 export interface ConnectionsQuery {
-  readonly teamName?: string;
+  readonly ownerId: string;
 }
 &nbsp;
 interface OomolCacheBaseOptions&lt;T&gt; {
@@ -966,8 +964,8 @@ export interface ConnectionsCacheOptions {
   readonly environment?: string;
   /** Nonempty, non-secret identifier for the current login session. */
   readonly sessionId: string;
-  /** Team scope sent to the host loader. Omit it for the personal scope. */
-  readonly teamName?: string;
+  /** Stable owner identity sent to the host loader. */
+  readonly ownerId: string;
   readonly schemaVersion: number;
   readonly maxAge: number;
   readonly decode: (value: unknown) =&gt; ConnectionsResponse;
@@ -1011,11 +1009,11 @@ function createOomolCache&lt;T&gt;(resource: string, options: OomolFactoryOption
 &nbsp;
 function createConnectionsCacheInternal(
   options: ConnectionsCacheOptions,
-  validated: { environment: string; teamName?: string },
+  validated: { environment: string; ownerId: string },
 ): ConnectionsCache {
-  const { environment, teamName } = validated;
+  const { environment, ownerId } = validated;
   const { load } = options;
-  const key = JSON.stringify([teamName ?? null]);
+  const key = JSON.stringify([ownerId]);
   return createSessionCache({
     namespace: JSON.stringify([oomolNamespaces.connections, environment]),
     schemaVersion: options.schemaVersion,
@@ -1023,7 +1021,7 @@ function createConnectionsCacheInternal(
     sessionId: options.sessionId,
     key: () =&gt; key,
     decode: options.decode,
-    load: (_query, validation) =&gt; load({ teamName }, validation),
+    load: (_query, validation) =&gt; load({ ownerId }, validation),
   });
 }
 &nbsp;
@@ -1044,24 +1042,23 @@ function normalizeEnvironment(value: unknown): string {
   return environment;
 }
 &nbsp;
-function normalizeTeamName(value: unknown): string | undefined {
-  if (value === undefined) return undefined;
-  if (typeof value !== "string" || !value.trim()) throw new TypeError("teamName must be nonempty");
+function normalizeOwnerId(value: unknown): string {
+  if (typeof value !== "string" || !value.trim()) throw new TypeError("ownerId must be nonempty");
   return value;
 }
 &nbsp;
 function validateConnectionsOptions(options: {
   readonly environment?: unknown;
   readonly sessionId?: unknown;
-  readonly teamName?: unknown;
+  readonly ownerId: unknown;
   readonly load?: unknown;
-}): { environment: string; teamName?: string } {
+}): { environment: string; ownerId: string } {
   const environment = normalizeEnvironment(options.environment);
   if (typeof options.sessionId !== "string" || !options.sessionId.trim())
     throw new TypeError("sessionId must be nonempty");
-  const teamName = normalizeTeamName(options.teamName);
+  const ownerId = normalizeOwnerId(options.ownerId);
   if (typeof options.load !== "function") throw new TypeError("load must be a function");
-  return { environment, teamName };
+  return { environment, ownerId };
 }
 &nbsp;
 /** Create an IndexedDB cache for the account-independent GET /v1/providers response, keyed by environment and locale. */
@@ -1152,10 +1149,10 @@ export function getAppCatalogCache(options: AppCatalogCacheOptions): OomolCache&
   );
 }
 &nbsp;
-/** Return the shared sessionStorage cache for one login session and team scope. */
+/** Return the shared sessionStorage cache for one login session and owner scope. */
 export function getConnectionsCache(options: ConnectionsCacheOptions): ConnectionsCache {
   const validated = validateConnectionsOptions(options);
-  const query = { teamName: validated.teamName };
+  const query = { ownerId: validated.ownerId };
   return getSingleton(singletonKey(oomolNamespaces.connections, options, query, options.sessionId), () =&gt;
     createConnectionsCacheInternal(options, validated),
   );
@@ -1345,7 +1342,7 @@ export interface ConnectionsResponse {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-10-01T04:41:04.664Z
+                at 2026-10-01T08:42:43.161Z
             </div>
         <script src="prettify.js"></script>
         <script>
