@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.1.4](https://github.com/oomol-lab/resource-cache/compare/v0.1.3...v0.1.4) (2026-10-01)
+
+### Features
+
+* implement readableKey function for cache key generation ([3122147](https://github.com/oomol-lab/resource-cache/commit/3122147f5f5526deb68d678f049f922d2b6d9542))
+
 ## [0.1.3](https://github.com/oomol-lab/resource-cache/compare/v0.1.2...v0.1.3) (2026-10-01)
 
 ### Features
