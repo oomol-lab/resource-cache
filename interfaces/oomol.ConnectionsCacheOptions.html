@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="x-ua-compatible" content="IE=edge">
-    <title>CacheOptions | @oomol-lab/resource-cache - v0.1.1</title>
+    <title>ConnectionsCacheOptions | @oomol-lab/resource-cache - v0.1.1</title>
     <meta name="description" content="Documentation for @oomol-lab/resource-cache">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="../assets/style.css">
@@ -58,89 +58,60 @@
       <div class="col-content">
         <div class="tsd-page-title">
           <ul class="tsd-breadcrumb" aria-label="Breadcrumb">
-            <li><a href="../modules/index.html">index</a></li>
-            <li><a href="" aria-current="page">CacheOptions</a></li>
+            <li><a href="../modules/oomol.html">oomol</a></li>
+            <li><a href="" aria-current="page">ConnectionsCacheOptions</a></li>
           </ul>
-          <h1>Interface CacheOptions&lt;T, Q&gt;</h1>
+          <h1>Interface ConnectionsCacheOptions</h1>
         </div>
         <div class="tsd-signature">
-          <span class="tsd-signature-keyword">interface</span> <span class="tsd-kind-interface">CacheOptions</span
-          ><span class="tsd-signature-symbol">&lt;</span
-          ><a class="tsd-signature-type tsd-kind-type-parameter" href="#t">T</a
-          ><span class="tsd-signature-symbol">,</span>
-          <a class="tsd-signature-type tsd-kind-type-parameter" href="#q">Q</a><span class="tsd-signature-symbol"
-            >&gt;</span
-          > <span class="tsd-signature-symbol">{</span><br>    <a class="tsd-kind-property" href="#decode">decode</a
-          ><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span
-          ><span class="tsd-kind-parameter">value</span><span class="tsd-signature-symbol">:</span>
-          <span class="tsd-signature-type">unknown</span><span class="tsd-signature-symbol">)</span>
-          <span class="tsd-signature-symbol">=&gt;</span>
-          <a class="tsd-signature-type tsd-kind-type-parameter" href="#t">T</a><span class="tsd-signature-symbol"
-            >;</span
-          ><br>    <a class="tsd-kind-property" href="#key">key</a><span class="tsd-signature-symbol">:</span>
-          <span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">query</span
-          ><span class="tsd-signature-symbol">:</span>
-          <a class="tsd-signature-type tsd-kind-type-parameter" href="#q">Q</a><span class="tsd-signature-symbol"
-            >)</span
-          > <span class="tsd-signature-symbol">=&gt;</span> <span class="tsd-signature-type">string</span
+          <span class="tsd-signature-keyword">interface</span>
+          <span class="tsd-kind-interface">ConnectionsCacheOptions</span> <span class="tsd-signature-symbol">{</span>
+          <br>    <a class="tsd-kind-property" href="#decode">decode</a><span class="tsd-signature-symbol">:</span>
+          <span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">value</span
+          ><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">unknown</span
+          ><span class="tsd-signature-symbol">)</span> <span class="tsd-signature-symbol">=&gt;</span>
+          <a href="oomol.ConnectionsResponse.html" class="tsd-signature-type tsd-kind-interface"
+            >ConnectionsResponse</a
+          ><span class="tsd-signature-symbol">;</span><br>    <a class="tsd-kind-property" href="#environment"
+            >environment</a
+          ><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">string</span
           ><span class="tsd-signature-symbol">;</span><br>    <a class="tsd-kind-property" href="#load">load</a
-          ><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span
-          ><span class="tsd-kind-parameter">query</span><span class="tsd-signature-symbol">:</span>
-          <a class="tsd-signature-type tsd-kind-type-parameter" href="#q">Q</a><span class="tsd-signature-symbol"
+          ><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span><br>        <span
+            class="tsd-kind-parameter"
+            >query</span
+          ><span class="tsd-signature-symbol">:</span>
+          <a href="oomol.ConnectionsQuery.html" class="tsd-signature-type tsd-kind-interface">ConnectionsQuery</a><span
+            class="tsd-signature-symbol"
             >,</span
-          > <span class="tsd-kind-parameter">validation</span><span class="tsd-signature-symbol">:</span>
+          ><br>        <span class="tsd-kind-parameter">validation</span><span class="tsd-signature-symbol">:</span>
           <a href="index.CacheValidation.html" class="tsd-signature-type tsd-kind-interface">CacheValidation</a><span
             class="tsd-signature-symbol"
-            >)</span
-          > <span class="tsd-signature-symbol">=&gt;</span> <span class="tsd-signature-type">Promise</span
-          ><span class="tsd-signature-symbol">&lt;</span
+            >,</span
+          ><br>    <span class="tsd-signature-symbol">)</span> <span class="tsd-signature-symbol">=&gt;</span>
+          <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span
           ><a href="../types/index.LoadResult.html" class="tsd-signature-type tsd-kind-type-alias">LoadResult</a
           ><span class="tsd-signature-symbol">&lt;</span
-          ><a class="tsd-signature-type tsd-kind-type-parameter" href="#t">T</a
+          ><a href="oomol.ConnectionsResponse.html" class="tsd-signature-type tsd-kind-interface">ConnectionsResponse</a
           ><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">&gt;</span
           ><span class="tsd-signature-symbol">;</span><br>    <a class="tsd-kind-property" href="#maxage">maxAge</a
           ><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span
-          ><span class="tsd-signature-symbol">;</span><br>    <a class="tsd-kind-property" href="#namespace"
-            >namespace</a
-          ><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span
           ><span class="tsd-signature-symbol">;</span><br>    <a class="tsd-kind-property" href="#schemaversion"
             >schemaVersion</a
           ><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span
+          ><span class="tsd-signature-symbol">;</span><br>    <a class="tsd-kind-property" href="#sessionid"
+            >sessionId</a
+          ><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span
+          ><span class="tsd-signature-symbol">;</span><br>    <a class="tsd-kind-property" href="#teamname">teamName</a
+          ><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">string</span
           ><span class="tsd-signature-symbol">;</span><br><span class="tsd-signature-symbol">}</span>
         </div>
-        <section class="tsd-panel">
-          <h4>Type Parameters</h4>
-          <ul class="tsd-type-parameter-list">
-            <li>
-              <span id="t"><span class="tsd-kind-type-parameter">T</span></span>
-            </li>
-            <li>
-              <span id="q"><span class="tsd-kind-type-parameter">Q</span></span>
-            </li>
-          </ul>
-        </section>
-        <section class="tsd-panel tsd-hierarchy" data-refl="286">
-          <h4>Hierarchy (<a href="../hierarchy.html#index.CacheOptions">View Summary</a>)</h4>
-          <ul class="tsd-hierarchy">
-            <li class="tsd-hierarchy-item">
-              <span class="tsd-hierarchy-target">CacheOptions</span>
-              <ul class="tsd-hierarchy">
-                <li class="tsd-hierarchy-item">
-                  <a href="index.SessionCacheOptions.html" class="tsd-signature-type tsd-kind-interface"
-                    >SessionCacheOptions</a
-                  >
-                </li>
-              </ul>
-            </li>
-          </ul>
-        </section>
         <aside class="tsd-sources">
           <ul>
             <li>
               Defined in
               <a
-                href="https://github.com/oomol-lab/resource-cache/blob/1f6335339e5cc78b5f37d570ed81d7959b132ef8/src/types.ts#L12"
-                >types.ts:12</a
+                href="https://github.com/oomol-lab/resource-cache/blob/1f6335339e5cc78b5f37d570ed81d7959b132ef8/src/oomol.ts#L49"
+                >oomol.ts:49</a
               >
             </li>
           </ul>
@@ -169,10 +140,10 @@
                         <use href="../assets/icons.svg#icon-1024"></use>
                       </svg><span>decode</span></a
                     >
-                    <a href="#key" class="tsd-index-link"
+                    <a href="#environment" class="tsd-index-link"
                       ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property">
                         <use href="../assets/icons.svg#icon-1024"></use>
-                      </svg><span>key</span></a
+                      </svg><span>environment?</span></a
                     >
                     <a href="#load" class="tsd-index-link"
                       ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property">
@@ -184,15 +155,20 @@
                         <use href="../assets/icons.svg#icon-1024"></use>
                       </svg><span>max<wbr>Age</span></a
                     >
-                    <a href="#namespace" class="tsd-index-link"
-                      ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property">
-                        <use href="../assets/icons.svg#icon-1024"></use>
-                      </svg><span>namespace</span></a
-                    >
                     <a href="#schemaversion" class="tsd-index-link"
                       ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property">
                         <use href="../assets/icons.svg#icon-1024"></use>
                       </svg><span>schema<wbr>Version</span></a
+                    >
+                    <a href="#sessionid" class="tsd-index-link"
+                      ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property">
+                        <use href="../assets/icons.svg#icon-1024"></use>
+                      </svg><span>session<wbr>Id</span></a
+                    >
+                    <a href="#teamname" class="tsd-index-link"
+                      ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property">
+                        <use href="../assets/icons.svg#icon-1024"></use>
+                      </svg><span>team<wbr>Name?</span></a
                     >
                   </div>
                 </section>
@@ -226,44 +202,39 @@
                 <span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">value</span
                 ><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">unknown</span
                 ><span class="tsd-signature-symbol">)</span> <span class="tsd-signature-symbol">=&gt;</span>
-                <a class="tsd-signature-type tsd-kind-type-parameter" href="#t">T</a>
-              </div>
-              <div class="tsd-comment tsd-typography">
-                <p>Restore stored data. Throwing treats that record as a cache miss.</p>
+                <a href="oomol.ConnectionsResponse.html" class="tsd-signature-type tsd-kind-interface"
+                  >ConnectionsResponse</a
+                >
               </div>
               <aside class="tsd-sources">
                 <ul>
                   <li>
                     Defined in
                     <a
-                      href="https://github.com/oomol-lab/resource-cache/blob/1f6335339e5cc78b5f37d570ed81d7959b132ef8/src/types.ts#L25"
-                      >types.ts:25</a
+                      href="https://github.com/oomol-lab/resource-cache/blob/1f6335339e5cc78b5f37d570ed81d7959b132ef8/src/oomol.ts#L58"
+                      >oomol.ts:58</a
                     >
                   </li>
                 </ul>
               </aside>
             </section>
             <section class="tsd-panel tsd-member">
-              <h3 class="tsd-anchor-link" id="key">
-                <code class="tsd-tag">Readonly</code><span>key</span
-                ><a href="#key" aria-label="Permalink" class="tsd-anchor-icon"
+              <h3 class="tsd-anchor-link" id="environment">
+                <code class="tsd-tag">Optional</code> <code class="tsd-tag">Readonly</code><span>environment</span
+                ><a href="#environment" aria-label="Permalink" class="tsd-anchor-icon"
                   ><svg viewBox="0 0 24 24" aria-hidden="true">
                     <use href="../assets/icons.svg#icon-anchor"></use>
                   </svg></a
                 >
               </h3>
               <div class="tsd-signature">
-                <span class="tsd-kind-property">key</span><span class="tsd-signature-symbol">:</span>
-                <span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">query</span
-                ><span class="tsd-signature-symbol">:</span>
-                <a class="tsd-signature-type tsd-kind-type-parameter" href="#q">Q</a><span class="tsd-signature-symbol"
-                  >)</span
-                > <span class="tsd-signature-symbol">=&gt;</span> <span class="tsd-signature-type">string</span>
+                <span class="tsd-kind-property">environment</span><span class="tsd-signature-symbol">?:</span>
+                <span class="tsd-signature-type">string</span>
               </div>
               <div class="tsd-comment tsd-typography">
                 <p>
-                  Stable response identity. Authentication, locale and team scope belong here only when they change the
-                  response. The OOMOL catalog factories are account-independent and define their own identity.
+                  Deployment environment used to separate hosts such as production and staging. Defaults to
+                  <code>production</code>.
                 </p>
               </div>
               <aside class="tsd-sources">
@@ -271,8 +242,8 @@
                   <li>
                     Defined in
                     <a
-                      href="https://github.com/oomol-lab/resource-cache/blob/1f6335339e5cc78b5f37d570ed81d7959b132ef8/src/types.ts#L23"
-                      >types.ts:23</a
+                      href="https://github.com/oomol-lab/resource-cache/blob/1f6335339e5cc78b5f37d570ed81d7959b132ef8/src/oomol.ts#L51"
+                      >oomol.ts:51</a
                     >
                   </li>
                 </ul>
@@ -289,28 +260,33 @@
               </h3>
               <div class="tsd-signature">
                 <span class="tsd-kind-property">load</span><span class="tsd-signature-symbol">:</span>
-                <span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">query</span
+                <span class="tsd-signature-symbol">(</span><br>    <span class="tsd-kind-parameter">query</span
                 ><span class="tsd-signature-symbol">:</span>
-                <a class="tsd-signature-type tsd-kind-type-parameter" href="#q">Q</a><span class="tsd-signature-symbol"
-                  >,</span
-                > <span class="tsd-kind-parameter">validation</span><span class="tsd-signature-symbol">:</span>
+                <a href="oomol.ConnectionsQuery.html" class="tsd-signature-type tsd-kind-interface"
+                  >ConnectionsQuery</a
+                ><span class="tsd-signature-symbol">,</span><br>    <span class="tsd-kind-parameter">validation</span
+                ><span class="tsd-signature-symbol">:</span>
                 <a href="index.CacheValidation.html" class="tsd-signature-type tsd-kind-interface"
                   >CacheValidation</a
-                ><span class="tsd-signature-symbol">)</span> <span class="tsd-signature-symbol">=&gt;</span>
-                <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span
+                ><span class="tsd-signature-symbol">,</span><br><span class="tsd-signature-symbol">)</span>
+                <span class="tsd-signature-symbol">=&gt;</span> <span class="tsd-signature-type">Promise</span
+                ><span class="tsd-signature-symbol">&lt;</span
                 ><a href="../types/index.LoadResult.html" class="tsd-signature-type tsd-kind-type-alias">LoadResult</a
                 ><span class="tsd-signature-symbol">&lt;</span
-                ><a class="tsd-signature-type tsd-kind-type-parameter" href="#t">T</a
+                ><a href="oomol.ConnectionsResponse.html" class="tsd-signature-type tsd-kind-interface"
+                  >ConnectionsResponse</a
                 ><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">&gt;</span>
               </div>
-              <div class="tsd-comment tsd-typography"><p>Load or conditionally validate a complete response.</p></div>
+              <div class="tsd-comment tsd-typography">
+                <p>Load the connection list; request credentials belong in the host request layer.</p>
+              </div>
               <aside class="tsd-sources">
                 <ul>
                   <li>
                     Defined in
                     <a
-                      href="https://github.com/oomol-lab/resource-cache/blob/1f6335339e5cc78b5f37d570ed81d7959b132ef8/src/types.ts#L27"
-                      >types.ts:27</a
+                      href="https://github.com/oomol-lab/resource-cache/blob/1f6335339e5cc78b5f37d570ed81d7959b132ef8/src/oomol.ts#L60"
+                      >oomol.ts:60</a
                     >
                   </li>
                 </ul>
@@ -329,44 +305,13 @@
                 <span class="tsd-kind-property">maxAge</span><span class="tsd-signature-symbol">:</span>
                 <span class="tsd-signature-type">number</span>
               </div>
-              <div class="tsd-comment tsd-typography">
-                <p>Finite nonnegative milliseconds. Zero always requires validation.</p>
-              </div>
               <aside class="tsd-sources">
                 <ul>
                   <li>
                     Defined in
                     <a
-                      href="https://github.com/oomol-lab/resource-cache/blob/1f6335339e5cc78b5f37d570ed81d7959b132ef8/src/types.ts#L18"
-                      >types.ts:18</a
-                    >
-                  </li>
-                </ul>
-              </aside>
-            </section>
-            <section class="tsd-panel tsd-member">
-              <h3 class="tsd-anchor-link" id="namespace">
-                <code class="tsd-tag">Readonly</code><span>namespace</span
-                ><a href="#namespace" aria-label="Permalink" class="tsd-anchor-icon"
-                  ><svg viewBox="0 0 24 24" aria-hidden="true">
-                    <use href="../assets/icons.svg#icon-anchor"></use>
-                  </svg></a
-                >
-              </h3>
-              <div class="tsd-signature">
-                <span class="tsd-kind-property">namespace</span><span class="tsd-signature-symbol">:</span>
-                <span class="tsd-signature-type">string</span>
-              </div>
-              <div class="tsd-comment tsd-typography">
-                <p>Nonempty identity for a resource and its data environment.</p>
-              </div>
-              <aside class="tsd-sources">
-                <ul>
-                  <li>
-                    Defined in
-                    <a
-                      href="https://github.com/oomol-lab/resource-cache/blob/1f6335339e5cc78b5f37d570ed81d7959b132ef8/src/types.ts#L14"
-                      >types.ts:14</a
+                      href="https://github.com/oomol-lab/resource-cache/blob/1f6335339e5cc78b5f37d570ed81d7959b132ef8/src/oomol.ts#L57"
+                      >oomol.ts:57</a
                     >
                   </li>
                 </ul>
@@ -385,16 +330,69 @@
                 <span class="tsd-kind-property">schemaVersion</span><span class="tsd-signature-symbol">:</span>
                 <span class="tsd-signature-type">number</span>
               </div>
+              <aside class="tsd-sources">
+                <ul>
+                  <li>
+                    Defined in
+                    <a
+                      href="https://github.com/oomol-lab/resource-cache/blob/1f6335339e5cc78b5f37d570ed81d7959b132ef8/src/oomol.ts#L56"
+                      >oomol.ts:56</a
+                    >
+                  </li>
+                </ul>
+              </aside>
+            </section>
+            <section class="tsd-panel tsd-member">
+              <h3 class="tsd-anchor-link" id="sessionid">
+                <code class="tsd-tag">Readonly</code><span>session<wbr>Id</span
+                ><a href="#sessionid" aria-label="Permalink" class="tsd-anchor-icon"
+                  ><svg viewBox="0 0 24 24" aria-hidden="true">
+                    <use href="../assets/icons.svg#icon-anchor"></use>
+                  </svg></a
+                >
+              </h3>
+              <div class="tsd-signature">
+                <span class="tsd-kind-property">sessionId</span><span class="tsd-signature-symbol">:</span>
+                <span class="tsd-signature-type">string</span>
+              </div>
               <div class="tsd-comment tsd-typography">
-                <p>Positive safe integer; increment for incompatible decoding contracts.</p>
+                <p>Nonempty, non-secret identifier for the current login session.</p>
               </div>
               <aside class="tsd-sources">
                 <ul>
                   <li>
                     Defined in
                     <a
-                      href="https://github.com/oomol-lab/resource-cache/blob/1f6335339e5cc78b5f37d570ed81d7959b132ef8/src/types.ts#L16"
-                      >types.ts:16</a
+                      href="https://github.com/oomol-lab/resource-cache/blob/1f6335339e5cc78b5f37d570ed81d7959b132ef8/src/oomol.ts#L53"
+                      >oomol.ts:53</a
+                    >
+                  </li>
+                </ul>
+              </aside>
+            </section>
+            <section class="tsd-panel tsd-member">
+              <h3 class="tsd-anchor-link" id="teamname">
+                <code class="tsd-tag">Optional</code> <code class="tsd-tag">Readonly</code><span>team<wbr>Name</span
+                ><a href="#teamname" aria-label="Permalink" class="tsd-anchor-icon"
+                  ><svg viewBox="0 0 24 24" aria-hidden="true">
+                    <use href="../assets/icons.svg#icon-anchor"></use>
+                  </svg></a
+                >
+              </h3>
+              <div class="tsd-signature">
+                <span class="tsd-kind-property">teamName</span><span class="tsd-signature-symbol">?:</span>
+                <span class="tsd-signature-type">string</span>
+              </div>
+              <div class="tsd-comment tsd-typography">
+                <p>Team scope sent to the host loader. Omit it for the personal scope.</p>
+              </div>
+              <aside class="tsd-sources">
+                <ul>
+                  <li>
+                    Defined in
+                    <a
+                      href="https://github.com/oomol-lab/resource-cache/blob/1f6335339e5cc78b5f37d570ed81d7959b132ef8/src/oomol.ts#L55"
+                      >oomol.ts:55</a
                     >
                   </li>
                 </ul>
@@ -445,10 +443,10 @@
                     ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property">
                       <use href="../assets/icons.svg#icon-1024"></use>
                     </svg><span>decode</span></a
-                  ><a href="#key"
+                  ><a href="#environment"
                     ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property">
                       <use href="../assets/icons.svg#icon-1024"></use>
-                    </svg><span>key</span></a
+                    </svg><span>environment</span></a
                   ><a href="#load"
                     ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property">
                       <use href="../assets/icons.svg#icon-1024"></use>
@@ -457,14 +455,18 @@
                     ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property">
                       <use href="../assets/icons.svg#icon-1024"></use>
                     </svg><span>max<wbr>Age</span></a
-                  ><a href="#namespace"
-                    ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property">
-                      <use href="../assets/icons.svg#icon-1024"></use>
-                    </svg><span>namespace</span></a
                   ><a href="#schemaversion"
                     ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property">
                       <use href="../assets/icons.svg#icon-1024"></use>
                     </svg><span>schema<wbr>Version</span></a
+                  ><a href="#sessionid"
+                    ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property">
+                      <use href="../assets/icons.svg#icon-1024"></use>
+                    </svg><span>session<wbr>Id</span></a
+                  ><a href="#teamname"
+                    ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property">
+                      <use href="../assets/icons.svg#icon-1024"></use>
+                    </svg><span>team<wbr>Name</span></a
                   >
                 </div>
               </details>

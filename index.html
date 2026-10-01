@@ -295,7 +295,7 @@
             >
           </h2>
           <pre
-          ><code class="ts"><span class="hl-3">import</span><span class="hl-1"> </span><span class="hl-3">type</span><span class="hl-1"> {</span><br/><span class="hl-1">  </span><span class="hl-4">ProvidersResponse</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-4">ActionsResponse</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-4">AppCatalogResponse</span><span class="hl-1">,</span><br/><span class="hl-1">} </span><span class="hl-3">from</span><span class="hl-1"> </span><span class="hl-2">&#39;@oomol-lab/resource-cache/oomol&#39;</span>
+          ><code class="ts"><span class="hl-3">import</span><span class="hl-1"> </span><span class="hl-3">type</span><span class="hl-1"> {</span><br/><span class="hl-1">  </span><span class="hl-4">ProvidersResponse</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-4">ActionsResponse</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-4">AppCatalogResponse</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-4">ConnectionsResponse</span><span class="hl-1">,</span><br/><span class="hl-1">} </span><span class="hl-3">from</span><span class="hl-1"> </span><span class="hl-2">&#39;@oomol-lab/resource-cache/oomol&#39;</span>
 </code><button type="button">Copy</button></pre>
 
           <table>
@@ -321,35 +321,58 @@
                   metadata.
                 </td>
               </tr>
+              <tr>
+                <td><code>ConnectionsResponse</code></td>
+                <td><code>/v1/connections</code>, including connection app views and summary metadata.</td>
+              </tr>
             </tbody>
           </table>
           <p>Validate these responses in <code>load</code> and <code>decode</code>.</p>
           <p>
-            The OOMOL entry also exports locale-scoped factories. They use fixed namespaces and include
-            <code>locale</code> in the cache identity, so callers do not need to construct namespace or key strings. Use
-            <code>getProvidersCache</code>, <code>getActionsCache</code>, and <code>getAppCatalogCache</code> when the
-            same cache should be shared by the application; use the corresponding <code>create*</code>
-            function when an independent lifecycle is needed. The first singleton call fixes <code>load</code>,
-            <code>decode</code>, and <code>maxAge</code> for that identity; call <code>dispose()</code> before creating
-            it again with changed behavior. The singleton registry is shared across package copies in the same
-            JavaScript runtime.
+            The OOMOL entry exports separate configuration types, <code>ProvidersCacheOptions</code>,
+            <code>ActionsCacheOptions</code>, and
+            <code>AppCatalogCacheOptions</code>, for the three catalog factories. These factories serve catalog data
+            shared across accounts, teams and flows. They use fixed namespaces and include <code>environment</code> and
+            <code>locale</code> (and, for Actions, <code>service</code>) in the cache identity, so callers do not need
+            to construct namespace or key strings. <code>environment</code> defaults to <code>production</code>
+            and can be set to values such as <code>staging</code> when the host serves a separate deployment. A request
+            may still require an access token. Keep that token in the Providers or Actions request layer inside
+            <code>load</code>; App Catalog is public and does not require credentials. Credentials must not be used as a
+            cache key, namespace, or environment value.
+          </p>
+          <p>
+            Use <code>getProvidersCache</code>, <code>getActionsCache</code>, and <code>getAppCatalogCache</code>. They
+            return the shared cache for an environment, locale and schema version. The first call fixes
+            <code>load</code>, <code>decode</code>, and <code>maxAge</code> for that identity; provide a stable
+            <code>load</code>
+            function that reads the current request credentials. The singleton registry is shared across package copies
+            in the same JavaScript runtime.
           </p>
           <pre
-          ><code class="ts"><span class="hl-3">import</span><span class="hl-1"> { </span><span class="hl-4">getAppCatalogCache</span><span class="hl-1"> } </span><span class="hl-3">from</span><span class="hl-1"> </span><span class="hl-2">&#39;@oomol-lab/resource-cache/oomol&#39;</span><br/><br/><span class="hl-5">const</span><span class="hl-1"> </span><span class="hl-7">apps</span><span class="hl-1"> = </span><span class="hl-0">getAppCatalogCache</span><span class="hl-1">({</span><br/><span class="hl-1">  </span><span class="hl-4">locale:</span><span class="hl-1"> </span><span class="hl-2">&#39;zh-CN&#39;</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-4">schemaVersion:</span><span class="hl-1"> </span><span class="hl-8">1</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-4">maxAge:</span><span class="hl-1"> </span><span class="hl-8">10</span><span class="hl-1"> * </span><span class="hl-8">60_000</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-4">decode:</span><span class="hl-1"> </span><span class="hl-4">decodeAppCatalog</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-0">load</span><span class="hl-4">:</span><span class="hl-1"> ({ </span><span class="hl-4">locale</span><span class="hl-1"> }, </span><span class="hl-4">validation</span><span class="hl-1">) </span><span class="hl-5">=&gt;</span><span class="hl-1"> </span><span class="hl-4">api</span><span class="hl-1">.</span><span class="hl-0">getPublicApps</span><span class="hl-1">({ </span><span class="hl-4">locale</span><span class="hl-1">, ...</span><span class="hl-4">validation</span><span class="hl-1"> }),</span><br/><span class="hl-1">})</span><br/><br/><span class="hl-5">const</span><span class="hl-1"> </span><span class="hl-7">response</span><span class="hl-1"> = </span><span class="hl-3">await</span><span class="hl-1"> </span><span class="hl-4">apps</span><span class="hl-1">.</span><span class="hl-0">get</span><span class="hl-1">()</span>
+          ><code class="ts"><span class="hl-3">import</span><span class="hl-1"> { </span><span class="hl-4">getAppCatalogCache</span><span class="hl-1"> } </span><span class="hl-3">from</span><span class="hl-1"> </span><span class="hl-2">&#39;@oomol-lab/resource-cache/oomol&#39;</span><br/><br/><span class="hl-5">const</span><span class="hl-1"> </span><span class="hl-7">apps</span><span class="hl-1"> = </span><span class="hl-0">getAppCatalogCache</span><span class="hl-1">({</span><br/><span class="hl-1">  </span><span class="hl-4">environment:</span><span class="hl-1"> </span><span class="hl-2">&#39;production&#39;</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-4">locale:</span><span class="hl-1"> </span><span class="hl-2">&#39;zh-CN&#39;</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-4">schemaVersion:</span><span class="hl-1"> </span><span class="hl-8">1</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-4">maxAge:</span><span class="hl-1"> </span><span class="hl-8">10</span><span class="hl-1"> * </span><span class="hl-8">60_000</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-4">decode:</span><span class="hl-1"> </span><span class="hl-4">decodeAppCatalog</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-0">load</span><span class="hl-4">:</span><span class="hl-1"> ({ </span><span class="hl-4">locale</span><span class="hl-1"> }, </span><span class="hl-4">validation</span><span class="hl-1">) </span><span class="hl-5">=&gt;</span><span class="hl-1"> </span><span class="hl-4">api</span><span class="hl-1">.</span><span class="hl-0">getPublicApps</span><span class="hl-1">({ </span><span class="hl-4">locale</span><span class="hl-1">, ...</span><span class="hl-4">validation</span><span class="hl-1"> }),</span><br/><span class="hl-1">})</span><br/><br/><span class="hl-5">const</span><span class="hl-1"> </span><span class="hl-7">response</span><span class="hl-1"> = </span><span class="hl-3">await</span><span class="hl-1"> </span><span class="hl-4">apps</span><span class="hl-1">.</span><span class="hl-0">get</span><span class="hl-1">()</span>
 </code><button type="button">Copy</button></pre>
 
           <p>
-            Use <code>createProvidersCache</code> and <code>createActionsCache</code> for the other two response types.
-            The locale is fixed when an instance is created. An Actions cache accepts the service as the operation
-            query, so one instance can serve multiple services:
+            An Actions cache accepts the service as the operation query, so one shared instance can serve multiple
+            services:
           </p>
           <pre
           ><code class="ts"><span class="hl-3">import</span><span class="hl-1"> { </span><span class="hl-4">getActionsCache</span><span class="hl-1"> } </span><span class="hl-3">from</span><span class="hl-1"> </span><span class="hl-2">&#39;@oomol-lab/resource-cache/oomol&#39;</span><br/><br/><span class="hl-5">const</span><span class="hl-1"> </span><span class="hl-7">actions</span><span class="hl-1"> = </span><span class="hl-0">getActionsCache</span><span class="hl-1">({</span><br/><span class="hl-1">  </span><span class="hl-4">locale:</span><span class="hl-1"> </span><span class="hl-2">&#39;zh-CN&#39;</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-4">schemaVersion:</span><span class="hl-1"> </span><span class="hl-8">1</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-4">maxAge:</span><span class="hl-1"> </span><span class="hl-8">10</span><span class="hl-1"> * </span><span class="hl-8">60_000</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-4">decode:</span><span class="hl-1"> </span><span class="hl-4">decodeActions</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-0">load</span><span class="hl-4">:</span><span class="hl-1"> ({ </span><span class="hl-4">locale</span><span class="hl-1">, </span><span class="hl-4">service</span><span class="hl-1"> }, </span><span class="hl-4">validation</span><span class="hl-1">) </span><span class="hl-5">=&gt;</span><span class="hl-1"> </span><span class="hl-4">api</span><span class="hl-1">.</span><span class="hl-0">getActions</span><span class="hl-1">({ </span><span class="hl-4">locale</span><span class="hl-1">, </span><span class="hl-4">service</span><span class="hl-1">, ...</span><span class="hl-4">validation</span><span class="hl-1"> }),</span><br/><span class="hl-1">})</span><br/><br/><span class="hl-5">const</span><span class="hl-1"> </span><span class="hl-7">gmail</span><span class="hl-1"> = </span><span class="hl-3">await</span><span class="hl-1"> </span><span class="hl-4">actions</span><span class="hl-1">.</span><span class="hl-0">get</span><span class="hl-1">(</span><span class="hl-2">&#39;gmail&#39;</span><span class="hl-1">)</span><br/><span class="hl-5">const</span><span class="hl-1"> </span><span class="hl-7">calendar</span><span class="hl-1"> = </span><span class="hl-3">await</span><span class="hl-1"> </span><span class="hl-4">actions</span><span class="hl-1">.</span><span class="hl-0">get</span><span class="hl-1">(</span><span class="hl-2">&#39;calendar&#39;</span><span class="hl-1">)</span>
 </code><button type="button">Copy</button></pre>
 
           <p>
-            Set the optional <code>scope</code> when the same browser stores catalogs for different environments, users,
-            teams, or permission sets.
+            Connections are scoped to a login session and use <code>sessionStorage</code>. The required
+            <code>sessionId</code> must be a stable, non-secret login identifier, never an access token.
+            <code>teamName</code> is optional for the personal scope and is part of the cache identity when provided.
+            Call <code>dispose()</code> when the session ends; it removes all connection scopes for that login session.
+          </p>
+          <pre
+          ><code class="ts"><span class="hl-3">import</span><span class="hl-1"> { </span><span class="hl-4">getConnectionsCache</span><span class="hl-1"> } </span><span class="hl-3">from</span><span class="hl-1"> </span><span class="hl-2">&#39;@oomol-lab/resource-cache/oomol&#39;</span><br/><br/><span class="hl-5">const</span><span class="hl-1"> </span><span class="hl-7">connections</span><span class="hl-1"> = </span><span class="hl-0">getConnectionsCache</span><span class="hl-1">({</span><br/><span class="hl-1">  </span><span class="hl-4">environment:</span><span class="hl-1"> </span><span class="hl-2">&#39;production&#39;</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-4">sessionId:</span><span class="hl-1"> </span><span class="hl-4">loginSessionId</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-4">teamName:</span><span class="hl-1"> </span><span class="hl-4">currentTeamName</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-4">schemaVersion:</span><span class="hl-1"> </span><span class="hl-8">1</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-4">maxAge:</span><span class="hl-1"> </span><span class="hl-8">60_000</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-4">decode:</span><span class="hl-1"> </span><span class="hl-4">decodeConnections</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-0">load</span><span class="hl-4">:</span><span class="hl-1"> ({ </span><span class="hl-4">teamName</span><span class="hl-1"> }, </span><span class="hl-4">validation</span><span class="hl-1">) </span><span class="hl-5">=&gt;</span><span class="hl-1"> </span><span class="hl-4">api</span><span class="hl-1">.</span><span class="hl-0">getConnections</span><span class="hl-1">({ </span><span class="hl-4">teamName</span><span class="hl-1">, ...</span><span class="hl-4">validation</span><span class="hl-1"> }),</span><br/><span class="hl-1">})</span><br/><br/><span class="hl-5">const</span><span class="hl-1"> </span><span class="hl-7">response</span><span class="hl-1"> = </span><span class="hl-3">await</span><span class="hl-1"> </span><span class="hl-4">connections</span><span class="hl-1">.</span><span class="hl-0">get</span><span class="hl-1">()</span><br/><span class="hl-3">await</span><span class="hl-1"> </span><span class="hl-4">connections</span><span class="hl-1">.</span><span class="hl-0">dispose</span><span class="hl-1">() </span><span class="hl-10">// on logout</span>
+</code><button type="button">Copy</button></pre>
+
+          <p>
+            Use the generic cache API for account- or permission-specific endpoints that do not match the Connections
+            response contract.
           </p>
           <h2 id="contributing" class="tsd-anchor-link">
             Contributing<a href="#contributing" aria-label="Permalink" class="tsd-anchor-icon"

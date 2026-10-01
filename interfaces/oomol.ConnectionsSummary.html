@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="x-ua-compatible" content="IE=edge">
-    <title>CacheSnapshot | @oomol-lab/resource-cache - v0.1.1</title>
+    <title>ConnectionsSummary | @oomol-lab/resource-cache - v0.1.1</title>
     <meta name="description" content="Documentation for @oomol-lab/resource-cache">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="../assets/style.css">
@@ -58,49 +58,49 @@
       <div class="col-content">
         <div class="tsd-page-title">
           <ul class="tsd-breadcrumb" aria-label="Breadcrumb">
-            <li><a href="../modules/index.html">index</a></li>
-            <li><a href="" aria-current="page">CacheSnapshot</a></li>
+            <li><a href="../modules/oomol.html">oomol</a></li>
+            <li><a href="" aria-current="page">ConnectionsSummary</a></li>
           </ul>
-          <h1>Interface CacheSnapshot&lt;T&gt;</h1>
+          <h1>Interface ConnectionsSummary</h1>
         </div>
         <div class="tsd-signature">
-          <span class="tsd-signature-keyword">interface</span> <span class="tsd-kind-interface">CacheSnapshot</span
-          ><span class="tsd-signature-symbol">&lt;</span
-          ><a class="tsd-signature-type tsd-kind-type-parameter" href="#t">T</a
-          ><span class="tsd-signature-symbol">&gt;</span> <span class="tsd-signature-symbol">{</span><br>    <a
+          <span class="tsd-signature-keyword">interface</span>
+          <span class="tsd-kind-interface">ConnectionsSummary</span> <span class="tsd-signature-symbol">{</span>
+          <br>    <a class="tsd-kind-property" href="#activeconnectedappcount">activeConnectedAppCount</a
+          ><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span
+          ><span class="tsd-signature-symbol">;</span><br>    <a
             class="tsd-kind-property"
-            href="#data"
-            >data</a
-          ><span class="tsd-signature-symbol">:</span>
-          <a class="tsd-signature-type tsd-kind-type-parameter" href="#t">T</a><span class="tsd-signature-symbol"
-            >;</span
-          ><br>    <a class="tsd-kind-property" href="#etag">etag</a><span class="tsd-signature-symbol">:</span>
-          <span class="tsd-signature-type">string</span> <span class="tsd-signature-symbol">|</span>
-          <span class="tsd-signature-type">null</span><span class="tsd-signature-symbol">;</span><br>    <a
+            href="#activeconnectedprovidercount"
+            >activeConnectedProviderCount</a
+          ><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span
+          ><span class="tsd-signature-symbol">;</span><br>    <a
             class="tsd-kind-property"
-            href="#fresh"
-            >fresh</a
-          ><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span
-          ><span class="tsd-signature-symbol">;</span><br>    <a class="tsd-kind-property" href="#validatedat"
-            >validatedAt</a
+            href="#connectableprovidercount"
+            >connectableProviderCount</a
+          ><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span
+          ><span class="tsd-signature-symbol">;</span><br>    <a class="tsd-kind-property" href="#connectedappcount"
+            >connectedAppCount</a
+          ><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span
+          ><span class="tsd-signature-symbol">;</span><br>    <a
+            class="tsd-kind-property"
+            href="#connectedprovidercount"
+            >connectedProviderCount</a
+          ><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span
+          ><span class="tsd-signature-symbol">;</span><br>    <a class="tsd-kind-property" href="#filteredappcount"
+            >filteredAppCount</a
+          ><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span
+          ><span class="tsd-signature-symbol">;</span><br>    <a class="tsd-kind-property" href="#providercount"
+            >providerCount</a
           ><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span
           ><span class="tsd-signature-symbol">;</span><br><span class="tsd-signature-symbol">}</span>
         </div>
-        <section class="tsd-panel">
-          <h4>Type Parameters</h4>
-          <ul class="tsd-type-parameter-list">
-            <li>
-              <span id="t"><span class="tsd-kind-type-parameter">T</span></span>
-            </li>
-          </ul>
-        </section>
         <aside class="tsd-sources">
           <ul>
             <li>
               Defined in
               <a
-                href="https://github.com/oomol-lab/resource-cache/blob/1f6335339e5cc78b5f37d570ed81d7959b132ef8/src/types.ts#L35"
-                >types.ts:35</a
+                href="https://github.com/oomol-lab/resource-cache/blob/1f6335339e5cc78b5f37d570ed81d7959b132ef8/src/oomol.ts#L409"
+                >oomol.ts:409</a
               >
             </li>
           </ul>
@@ -124,25 +124,40 @@
                     >
                   </h3>
                   <div class="tsd-index-list">
-                    <a href="#data" class="tsd-index-link"
+                    <a href="#activeconnectedappcount" class="tsd-index-link"
                       ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property">
                         <use href="../assets/icons.svg#icon-1024"></use>
-                      </svg><span>data</span></a
+                      </svg><span>active<wbr>Connected<wbr>App<wbr>Count</span></a
                     >
-                    <a href="#etag" class="tsd-index-link"
+                    <a href="#activeconnectedprovidercount" class="tsd-index-link"
                       ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property">
                         <use href="../assets/icons.svg#icon-1024"></use>
-                      </svg><span>etag</span></a
+                      </svg><span>active<wbr>Connected<wbr>Provider<wbr>Count</span></a
                     >
-                    <a href="#fresh" class="tsd-index-link"
+                    <a href="#connectableprovidercount" class="tsd-index-link"
                       ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property">
                         <use href="../assets/icons.svg#icon-1024"></use>
-                      </svg><span>fresh</span></a
+                      </svg><span>connectable<wbr>Provider<wbr>Count</span></a
                     >
-                    <a href="#validatedat" class="tsd-index-link"
+                    <a href="#connectedappcount" class="tsd-index-link"
                       ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property">
                         <use href="../assets/icons.svg#icon-1024"></use>
-                      </svg><span>validated<wbr>At</span></a
+                      </svg><span>connected<wbr>App<wbr>Count</span></a
+                    >
+                    <a href="#connectedprovidercount" class="tsd-index-link"
+                      ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property">
+                        <use href="../assets/icons.svg#icon-1024"></use>
+                      </svg><span>connected<wbr>Provider<wbr>Count</span></a
+                    >
+                    <a href="#filteredappcount" class="tsd-index-link"
+                      ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property">
+                        <use href="../assets/icons.svg#icon-1024"></use>
+                      </svg><span>filtered<wbr>App<wbr>Count</span></a
+                    >
+                    <a href="#providercount" class="tsd-index-link"
+                      ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property">
+                        <use href="../assets/icons.svg#icon-1024"></use>
+                      </svg><span>provider<wbr>Count</span></a
                     >
                   </div>
                 </section>
@@ -163,104 +178,175 @@
           </summary>
           <section>
             <section class="tsd-panel tsd-member">
-              <h3 class="tsd-anchor-link" id="data">
-                <code class="tsd-tag">Readonly</code><span>data</span
-                ><a href="#data" aria-label="Permalink" class="tsd-anchor-icon"
+              <h3 class="tsd-anchor-link" id="activeconnectedappcount">
+                <span>active<wbr>Connected<wbr>App<wbr>Count</span
+                ><a href="#activeconnectedappcount" aria-label="Permalink" class="tsd-anchor-icon"
                   ><svg viewBox="0 0 24 24" aria-hidden="true">
                     <use href="../assets/icons.svg#icon-anchor"></use>
                   </svg></a
                 >
               </h3>
               <div class="tsd-signature">
-                <span class="tsd-kind-property">data</span><span class="tsd-signature-symbol">:</span>
-                <a class="tsd-signature-type tsd-kind-type-parameter" href="#t">T</a>
+                <span class="tsd-kind-property">activeConnectedAppCount</span
+                ><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span>
               </div>
               <aside class="tsd-sources">
                 <ul>
                   <li>
                     Defined in
                     <a
-                      href="https://github.com/oomol-lab/resource-cache/blob/1f6335339e5cc78b5f37d570ed81d7959b132ef8/src/types.ts#L36"
-                      >types.ts:36</a
+                      href="https://github.com/oomol-lab/resource-cache/blob/1f6335339e5cc78b5f37d570ed81d7959b132ef8/src/oomol.ts#L415"
+                      >oomol.ts:415</a
                     >
                   </li>
                 </ul>
               </aside>
             </section>
             <section class="tsd-panel tsd-member">
-              <h3 class="tsd-anchor-link" id="etag">
-                <code class="tsd-tag">Readonly</code><span>etag</span
-                ><a href="#etag" aria-label="Permalink" class="tsd-anchor-icon"
+              <h3 class="tsd-anchor-link" id="activeconnectedprovidercount">
+                <span>active<wbr>Connected<wbr>Provider<wbr>Count</span
+                ><a href="#activeconnectedprovidercount" aria-label="Permalink" class="tsd-anchor-icon"
                   ><svg viewBox="0 0 24 24" aria-hidden="true">
                     <use href="../assets/icons.svg#icon-anchor"></use>
                   </svg></a
                 >
               </h3>
               <div class="tsd-signature">
-                <span class="tsd-kind-property">etag</span><span class="tsd-signature-symbol">:</span>
-                <span class="tsd-signature-type">string</span> <span class="tsd-signature-symbol">|</span>
-                <span class="tsd-signature-type">null</span>
+                <span class="tsd-kind-property">activeConnectedProviderCount</span
+                ><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span>
               </div>
               <aside class="tsd-sources">
                 <ul>
                   <li>
                     Defined in
                     <a
-                      href="https://github.com/oomol-lab/resource-cache/blob/1f6335339e5cc78b5f37d570ed81d7959b132ef8/src/types.ts#L37"
-                      >types.ts:37</a
+                      href="https://github.com/oomol-lab/resource-cache/blob/1f6335339e5cc78b5f37d570ed81d7959b132ef8/src/oomol.ts#L413"
+                      >oomol.ts:413</a
                     >
                   </li>
                 </ul>
               </aside>
             </section>
             <section class="tsd-panel tsd-member">
-              <h3 class="tsd-anchor-link" id="fresh">
-                <code class="tsd-tag">Readonly</code><span>fresh</span
-                ><a href="#fresh" aria-label="Permalink" class="tsd-anchor-icon"
+              <h3 class="tsd-anchor-link" id="connectableprovidercount">
+                <span>connectable<wbr>Provider<wbr>Count</span
+                ><a href="#connectableprovidercount" aria-label="Permalink" class="tsd-anchor-icon"
                   ><svg viewBox="0 0 24 24" aria-hidden="true">
                     <use href="../assets/icons.svg#icon-anchor"></use>
                   </svg></a
                 >
               </h3>
               <div class="tsd-signature">
-                <span class="tsd-kind-property">fresh</span><span class="tsd-signature-symbol">:</span>
-                <span class="tsd-signature-type">boolean</span>
+                <span class="tsd-kind-property">connectableProviderCount</span
+                ><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span>
               </div>
               <aside class="tsd-sources">
                 <ul>
                   <li>
                     Defined in
                     <a
-                      href="https://github.com/oomol-lab/resource-cache/blob/1f6335339e5cc78b5f37d570ed81d7959b132ef8/src/types.ts#L40"
-                      >types.ts:40</a
+                      href="https://github.com/oomol-lab/resource-cache/blob/1f6335339e5cc78b5f37d570ed81d7959b132ef8/src/oomol.ts#L411"
+                      >oomol.ts:411</a
                     >
                   </li>
                 </ul>
               </aside>
             </section>
             <section class="tsd-panel tsd-member">
-              <h3 class="tsd-anchor-link" id="validatedat">
-                <code class="tsd-tag">Readonly</code><span>validated<wbr>At</span
-                ><a href="#validatedat" aria-label="Permalink" class="tsd-anchor-icon"
+              <h3 class="tsd-anchor-link" id="connectedappcount">
+                <span>connected<wbr>App<wbr>Count</span
+                ><a href="#connectedappcount" aria-label="Permalink" class="tsd-anchor-icon"
                   ><svg viewBox="0 0 24 24" aria-hidden="true">
                     <use href="../assets/icons.svg#icon-anchor"></use>
                   </svg></a
                 >
               </h3>
               <div class="tsd-signature">
-                <span class="tsd-kind-property">validatedAt</span><span class="tsd-signature-symbol">:</span>
+                <span class="tsd-kind-property">connectedAppCount</span><span class="tsd-signature-symbol">:</span>
                 <span class="tsd-signature-type">number</span>
               </div>
-              <div class="tsd-comment tsd-typography">
-                <p>Unix milliseconds. Invalid or missing stored timestamps are reported as zero and stale.</p>
+              <aside class="tsd-sources">
+                <ul>
+                  <li>
+                    Defined in
+                    <a
+                      href="https://github.com/oomol-lab/resource-cache/blob/1f6335339e5cc78b5f37d570ed81d7959b132ef8/src/oomol.ts#L414"
+                      >oomol.ts:414</a
+                    >
+                  </li>
+                </ul>
+              </aside>
+            </section>
+            <section class="tsd-panel tsd-member">
+              <h3 class="tsd-anchor-link" id="connectedprovidercount">
+                <span>connected<wbr>Provider<wbr>Count</span
+                ><a href="#connectedprovidercount" aria-label="Permalink" class="tsd-anchor-icon"
+                  ><svg viewBox="0 0 24 24" aria-hidden="true">
+                    <use href="../assets/icons.svg#icon-anchor"></use>
+                  </svg></a
+                >
+              </h3>
+              <div class="tsd-signature">
+                <span class="tsd-kind-property">connectedProviderCount</span><span class="tsd-signature-symbol">:</span>
+                <span class="tsd-signature-type">number</span>
               </div>
               <aside class="tsd-sources">
                 <ul>
                   <li>
                     Defined in
                     <a
-                      href="https://github.com/oomol-lab/resource-cache/blob/1f6335339e5cc78b5f37d570ed81d7959b132ef8/src/types.ts#L39"
-                      >types.ts:39</a
+                      href="https://github.com/oomol-lab/resource-cache/blob/1f6335339e5cc78b5f37d570ed81d7959b132ef8/src/oomol.ts#L412"
+                      >oomol.ts:412</a
+                    >
+                  </li>
+                </ul>
+              </aside>
+            </section>
+            <section class="tsd-panel tsd-member">
+              <h3 class="tsd-anchor-link" id="filteredappcount">
+                <span>filtered<wbr>App<wbr>Count</span
+                ><a href="#filteredappcount" aria-label="Permalink" class="tsd-anchor-icon"
+                  ><svg viewBox="0 0 24 24" aria-hidden="true">
+                    <use href="../assets/icons.svg#icon-anchor"></use>
+                  </svg></a
+                >
+              </h3>
+              <div class="tsd-signature">
+                <span class="tsd-kind-property">filteredAppCount</span><span class="tsd-signature-symbol">:</span>
+                <span class="tsd-signature-type">number</span>
+              </div>
+              <aside class="tsd-sources">
+                <ul>
+                  <li>
+                    Defined in
+                    <a
+                      href="https://github.com/oomol-lab/resource-cache/blob/1f6335339e5cc78b5f37d570ed81d7959b132ef8/src/oomol.ts#L416"
+                      >oomol.ts:416</a
+                    >
+                  </li>
+                </ul>
+              </aside>
+            </section>
+            <section class="tsd-panel tsd-member">
+              <h3 class="tsd-anchor-link" id="providercount">
+                <span>provider<wbr>Count</span
+                ><a href="#providercount" aria-label="Permalink" class="tsd-anchor-icon"
+                  ><svg viewBox="0 0 24 24" aria-hidden="true">
+                    <use href="../assets/icons.svg#icon-anchor"></use>
+                  </svg></a
+                >
+              </h3>
+              <div class="tsd-signature">
+                <span class="tsd-kind-property">providerCount</span><span class="tsd-signature-symbol">:</span>
+                <span class="tsd-signature-type">number</span>
+              </div>
+              <aside class="tsd-sources">
+                <ul>
+                  <li>
+                    Defined in
+                    <a
+                      href="https://github.com/oomol-lab/resource-cache/blob/1f6335339e5cc78b5f37d570ed81d7959b132ef8/src/oomol.ts#L410"
+                      >oomol.ts:410</a
                     >
                   </li>
                 </ul>
@@ -307,22 +393,34 @@
                   >Properties
                 </summary>
                 <div>
-                  <a href="#data"
+                  <a href="#activeconnectedappcount"
                     ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property">
                       <use href="../assets/icons.svg#icon-1024"></use>
-                    </svg><span>data</span></a
-                  ><a href="#etag"
+                    </svg><span>active<wbr>Connected<wbr>App<wbr>Count</span></a
+                  ><a href="#activeconnectedprovidercount"
                     ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property">
                       <use href="../assets/icons.svg#icon-1024"></use>
-                    </svg><span>etag</span></a
-                  ><a href="#fresh"
+                    </svg><span>active<wbr>Connected<wbr>Provider<wbr>Count</span></a
+                  ><a href="#connectableprovidercount"
                     ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property">
                       <use href="../assets/icons.svg#icon-1024"></use>
-                    </svg><span>fresh</span></a
-                  ><a href="#validatedat"
+                    </svg><span>connectable<wbr>Provider<wbr>Count</span></a
+                  ><a href="#connectedappcount"
                     ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property">
                       <use href="../assets/icons.svg#icon-1024"></use>
-                    </svg><span>validated<wbr>At</span></a
+                    </svg><span>connected<wbr>App<wbr>Count</span></a
+                  ><a href="#connectedprovidercount"
+                    ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property">
+                      <use href="../assets/icons.svg#icon-1024"></use>
+                    </svg><span>connected<wbr>Provider<wbr>Count</span></a
+                  ><a href="#filteredappcount"
+                    ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property">
+                      <use href="../assets/icons.svg#icon-1024"></use>
+                    </svg><span>filtered<wbr>App<wbr>Count</span></a
+                  ><a href="#providercount"
+                    ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property">
+                      <use href="../assets/icons.svg#icon-1024"></use>
+                    </svg><span>provider<wbr>Count</span></a
                   >
                 </div>
               </details>
