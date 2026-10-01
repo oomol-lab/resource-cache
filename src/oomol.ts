@@ -16,19 +16,33 @@ export interface ActionsQuery extends OomolQuery {
   readonly service: string;
 }
 
-export interface OomolCacheOptions<T> {
-  /** Optional non-secret identity for a data environment or user/team/permission scope. */
-  readonly scope?: string;
+interface OomolCacheBaseOptions<T> {
+  /** Deployment environment used to separate hosts such as production and staging. Defaults to `production`. */
+  readonly environment?: string;
   /** Locale sent to the host loader and included in the cache identity. */
   readonly locale: string;
   readonly schemaVersion: number;
   readonly maxAge: number;
   readonly decode: (value: unknown) => T;
-  readonly load: (query: OomolQuery, validation: CacheValidation) => Promise<LoadResult<T>>;
 }
 
-export type ActionsCacheOptions = Omit<OomolCacheOptions<ActionsResponse>, "load"> & {
+export interface ProvidersCacheOptions extends OomolCacheBaseOptions<ProvidersResponse> {
+  /** Load the provider catalog; use request credentials only when the host endpoint requires them. */
+  readonly load: (query: OomolQuery, validation: CacheValidation) => Promise<LoadResult<ProvidersResponse>>;
+}
+
+export interface ActionsCacheOptions extends OomolCacheBaseOptions<ActionsResponse> {
+  /** Load the action catalog; use request credentials only when the host endpoint requires them. */
   readonly load: (query: ActionsQuery, validation: CacheValidation) => Promise<LoadResult<ActionsResponse>>;
+}
+
+export interface AppCatalogCacheOptions extends OomolCacheBaseOptions<AppCatalogResponse> {
+  /** Load the public app catalog. This request does not require credentials. */
+  readonly load: (query: OomolQuery, validation: CacheValidation) => Promise<LoadResult<AppCatalogResponse>>;
+}
+
+type OomolFactoryOptions<T> = OomolCacheBaseOptions<T> & {
+  readonly load: (query: OomolQuery, validation: CacheValidation) => Promise<LoadResult<T>>;
 };
 
 export type OomolCache<T> = ResourceCache<T, void>;
@@ -45,12 +59,12 @@ const singletonCaches =
     return registry;
   })();
 
-function createOomolCache<T>(resource: string, options: OomolCacheOptions<T>, query: OomolQuery): OomolCache<T> {
-  const scope = validateOomolOptions(options);
+function createOomolCache<T>(resource: string, options: OomolFactoryOptions<T>, query: OomolQuery): OomolCache<T> {
+  const environment = validateOomolOptions(options);
   const { load } = options;
   const key = JSON.stringify(query);
   const cacheOptions: CacheOptions<T, void> = {
-    namespace: JSON.stringify([resource, scope]),
+    namespace: JSON.stringify([resource, environment]),
     schemaVersion: options.schemaVersion,
     maxAge: options.maxAge,
     key: () => key,
@@ -61,28 +75,33 @@ function createOomolCache<T>(resource: string, options: OomolCacheOptions<T>, qu
 }
 
 function validateOomolOptions(options: {
-  readonly scope?: unknown;
+  readonly environment?: unknown;
   readonly locale?: unknown;
   readonly load?: unknown;
 }): string {
-  const scope = options.scope === undefined ? "default" : options.scope;
-  if (typeof scope !== "string" || !scope.trim()) throw new TypeError("scope must be nonempty");
+  const environment = normalizeEnvironment(options.environment);
   if (typeof options.locale !== "string" || !options.locale.trim()) throw new TypeError("locale must be nonempty");
   if (typeof options.load !== "function") throw new TypeError("load must be a function");
-  return scope;
+  return environment;
 }
 
-/** Create an IndexedDB cache for GET /v1/providers, scoped by environment, identity and locale. */
-export function createProvidersCache(options: OomolCacheOptions<ProvidersResponse>): OomolCache<ProvidersResponse> {
+function normalizeEnvironment(value: unknown): string {
+  const environment = value === undefined ? "production" : value;
+  if (typeof environment !== "string" || !environment.trim()) throw new TypeError("environment must be nonempty");
+  return environment;
+}
+
+/** Create an IndexedDB cache for the account-independent GET /v1/providers response, keyed by environment and locale. */
+function createProvidersCacheInternal(options: ProvidersCacheOptions): OomolCache<ProvidersResponse> {
   return createOomolCache(oomolNamespaces.providers, options, { locale: options.locale });
 }
 
-/** Create an IndexedDB cache for GET /v1/actions?service=…, keyed by the service passed to each operation. */
-export function createActionsCache(options: ActionsCacheOptions): ActionsCache {
-  const scope = validateOomolOptions(options);
+/** Create an IndexedDB cache for account-independent GET /v1/actions?service=…, keyed by environment, locale and service. */
+function createActionsCacheInternal(options: ActionsCacheOptions): ActionsCache {
+  const environment = validateOomolOptions(options);
   const { locale, load } = options;
   return createPersistentCache<ActionsResponse, string>({
-    namespace: JSON.stringify([oomolNamespaces.actions, scope]),
+    namespace: JSON.stringify([oomolNamespaces.actions, environment]),
     schemaVersion: options.schemaVersion,
     maxAge: options.maxAge,
     key: (service) => {
@@ -94,18 +113,18 @@ export function createActionsCache(options: ActionsCacheOptions): ActionsCache {
   });
 }
 
-/** Create an IndexedDB cache for GET /public/v1/apps, scoped by environment and locale. */
-export function createAppCatalogCache(options: OomolCacheOptions<AppCatalogResponse>): OomolCache<AppCatalogResponse> {
+/** Create an IndexedDB cache for the account-independent GET /public/v1/apps response, keyed by environment and locale. */
+function createAppCatalogCacheInternal(options: AppCatalogCacheOptions): OomolCache<AppCatalogResponse> {
   return createOomolCache(oomolNamespaces.appCatalog, options, { locale: options.locale });
 }
 
 function singletonKey(
   resource: string,
-  options: Pick<OomolCacheOptions<unknown>, "scope" | "schemaVersion">,
+  options: Pick<OomolCacheBaseOptions<unknown>, "environment" | "schemaVersion">,
   query: OomolQuery,
 ): string {
-  const scope = options.scope === undefined ? "default" : options.scope;
-  return JSON.stringify([resource, scope, options.schemaVersion, query]);
+  const environment = normalizeEnvironment(options.environment);
+  return JSON.stringify([resource, environment, options.schemaVersion, query]);
 }
 
 function getSingleton<T, Q>(key: string, create: () => ResourceCache<T, Q>): ResourceCache<T, Q> {
@@ -129,25 +148,25 @@ function getSingleton<T, Q>(key: string, create: () => ResourceCache<T, Q>): Res
   return singleton;
 }
 
-/** Return the shared Providers cache for one scope, locale and schema version. */
-export function getProvidersCache(options: OomolCacheOptions<ProvidersResponse>): OomolCache<ProvidersResponse> {
+/** Return the shared Providers cache for one environment, locale and schema version. */
+export function getProvidersCache(options: ProvidersCacheOptions): OomolCache<ProvidersResponse> {
   const query = { locale: options.locale };
   return getSingleton(singletonKey(oomolNamespaces.providers, options, query), () =>
-    createOomolCache(oomolNamespaces.providers, options, query),
+    createProvidersCacheInternal(options),
   );
 }
 
-/** Return the shared Actions cache for one scope, locale and schema version. */
+/** Return the shared Actions cache for one environment, locale and schema version. */
 export function getActionsCache(options: ActionsCacheOptions): ActionsCache {
   const query = { locale: options.locale };
-  return getSingleton(singletonKey(oomolNamespaces.actions, options, query), () => createActionsCache(options));
+  return getSingleton(singletonKey(oomolNamespaces.actions, options, query), () => createActionsCacheInternal(options));
 }
 
-/** Return the shared App Catalog cache for one scope, locale and schema version. */
-export function getAppCatalogCache(options: OomolCacheOptions<AppCatalogResponse>): OomolCache<AppCatalogResponse> {
+/** Return the shared App Catalog cache for one environment, locale and schema version. */
+export function getAppCatalogCache(options: AppCatalogCacheOptions): OomolCache<AppCatalogResponse> {
   const query = { locale: options.locale };
   return getSingleton(singletonKey(oomolNamespaces.appCatalog, options, query), () =>
-    createOomolCache(oomolNamespaces.appCatalog, options, query),
+    createAppCatalogCacheInternal(options),
   );
 }
 

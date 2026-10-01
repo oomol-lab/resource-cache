@@ -151,17 +151,25 @@ import type {
 
 Validate these responses in `load` and `decode`.
 
-The OOMOL entry also exports locale-scoped factories. They use fixed namespaces and include `locale` in the cache
-identity, so callers do not need to construct namespace or key strings. Use `getProvidersCache`, `getActionsCache`,
-and `getAppCatalogCache` when the same cache should be shared by the application; use the corresponding `create*`
-function when an independent lifecycle is needed. The first singleton call fixes `load`, `decode`, and `maxAge` for
-that identity; call `dispose()` before creating it again with changed behavior. The singleton registry is shared across
-package copies in the same JavaScript runtime.
+The OOMOL entry exports separate configuration types, `ProvidersCacheOptions`, `ActionsCacheOptions`, and
+`AppCatalogCacheOptions`, for the three catalog factories. All three
+factories serve catalog data shared across accounts, teams and flows. They use
+fixed namespaces and include `environment` and `locale` (and, for Actions, `service`) in the cache identity, so
+callers do not need to construct namespace or key strings. `environment` defaults to `production` and can be set to
+values such as `staging` when the host serves a separate deployment. A request may still require an access token. Keep
+that token in the Providers or Actions request layer inside `load`; App Catalog is public and does not require
+credentials. Credentials must not be used as a cache key, namespace, or environment value.
+
+Use `getProvidersCache`, `getActionsCache`, and `getAppCatalogCache`. They return the shared cache for an environment,
+locale and schema version. The first call fixes `load`, `decode`, and `maxAge` for that identity; provide a stable
+`load` function that reads the current request credentials. The singleton registry is shared across package copies in
+the same JavaScript runtime.
 
 ```ts
 import { getAppCatalogCache } from '@oomol-lab/resource-cache/oomol'
 
 const apps = getAppCatalogCache({
+  environment: 'production',
   locale: 'zh-CN',
   schemaVersion: 1,
   maxAge: 10 * 60_000,
@@ -172,9 +180,7 @@ const apps = getAppCatalogCache({
 const response = await apps.get()
 ```
 
-Use `createProvidersCache` and `createActionsCache` for the other two response types. The locale is fixed when an
-instance is created. An Actions cache accepts the service as the operation query, so one instance can serve multiple
-services:
+An Actions cache accepts the service as the operation query, so one shared instance can serve multiple services:
 
 ```ts
 import { getActionsCache } from '@oomol-lab/resource-cache/oomol'
@@ -191,8 +197,9 @@ const gmail = await actions.get('gmail')
 const calendar = await actions.get('calendar')
 ```
 
-Set the optional `scope` when the same browser stores catalogs for different environments, users, teams, or permission
-sets.
+Do not add account, team, flow, permission, or token values to these OOMOL cache options. If a future endpoint returns
+different catalog content for one of those dimensions, use the generic cache API and put that response dimension in
+its key instead.
 
 ## Contributing
 

@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## Unreleased
+
+### Changes
+
+* make OOMOL catalog cache identity explicit with an optional deployment `environment` (defaulting to `production`)
+* expose separate Providers, Actions and App Catalog factory option types
+* expose only shared `get*Cache` functions for OOMOL catalogs; use the root generic factories for custom lifecycles
+* keep account, team, flow, permission and token values out of OOMOL catalog cache identity
+
 ## 0.1.1 (2026-09-30)
 
 ### Features

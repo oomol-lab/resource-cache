@@ -4,13 +4,10 @@ import {
   type ActionsQuery,
   type ActionsResponse,
   type AppCatalogResponse,
-  createActionsCache,
-  createAppCatalogCache,
-  createProvidersCache,
   getActionsCache,
   getAppCatalogCache,
   getProvidersCache,
-  type OomolCacheOptions,
+  type ProvidersCacheOptions,
   type ProvidersResponse,
 } from "../src/oomol";
 import { modified } from "./helpers";
@@ -19,7 +16,9 @@ beforeEach(() => {
   vi.stubGlobal("indexedDB", new IDBFactory());
   vi.spyOn(Date, "now").mockReturnValue(1_000);
 });
-afterEach(() => {
+afterEach(async () => {
+  const registry = Reflect.get(globalThis, Symbol.for("oomol-lab.resource-cache.oomol-singletons"));
+  if (registry instanceof Map) await Promise.all([...registry.values()].map((cache) => cache.dispose()));
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
 });
@@ -50,126 +49,138 @@ const apps: AppCatalogResponse = {
   },
 };
 
-function options<T>(data: T): OomolCacheOptions<T> {
+function options<T>(data: T) {
   return {
-    scope: "production",
+    environment: "production",
     locale: "zh-CN",
     schemaVersion: 1,
     maxAge: 100,
     decode: vi.fn((value) => value as T),
-    load: vi.fn(async () => modified(data)),
+    load: vi.fn(async (_query: { locale: string }, _validation: unknown) => modified(data)),
   };
 }
 
 describe("OOMOL cache factories", () => {
   it("passes locale and validators to the loader and restores the same identity", async () => {
     const opts = options(providers);
-    const first = createProvidersCache(opts);
+    const first = getProvidersCache(opts);
     expect(await first.get()).toEqual(providers);
     expect(opts.load).toHaveBeenCalledWith({ locale: "zh-CN" }, { etag: null, signal: expect.any(AbortSignal) });
     expect(opts.decode).not.toHaveBeenCalled();
-    expect(await createProvidersCache(opts).get()).toEqual(providers);
+    expect(await getProvidersCache(opts).get()).toEqual(providers);
     expect(opts.load).toHaveBeenCalledTimes(1);
-    expect(opts.decode).toHaveBeenCalledTimes(1);
+    expect(opts.decode).toHaveBeenCalledTimes(0);
     vi.mocked(opts.load).mockResolvedValueOnce({ modified: false });
     expect(await first.get(undefined, { revalidate: true })).toEqual(providers);
     expect(opts.load).toHaveBeenLastCalledWith({ locale: "zh-CN" }, { etag: '"v1"', signal: expect.any(AbortSignal) });
   });
 
-  it("isolates locale, environment and resource without string concatenation collisions", async () => {
+  it("isolates environment, locale and resource without string concatenation collisions", async () => {
     const opts = options(providers);
-    await createProvidersCache(opts).get();
-    expect(await createProvidersCache({ ...opts, locale: "en-US" }).peek()).toBeUndefined();
-    expect(await createProvidersCache({ ...opts, scope: "staging" }).peek()).toBeUndefined();
-    expect(await createActionsCache(options(actions)).peek("gmail")).toBeUndefined();
-    const appCache = createAppCatalogCache(options(apps));
+    await getProvidersCache(opts).get();
+    expect(await getProvidersCache({ ...opts, environment: "staging" }).peek()).toBeUndefined();
+    expect(await getProvidersCache({ ...opts, locale: "en-US" }).peek()).toBeUndefined();
+    expect(await getActionsCache(options(actions)).peek("gmail")).toBeUndefined();
+    const appCache = getAppCatalogCache(options(apps));
     expect(await appCache.peek()).toBeUndefined();
     expect(await appCache.get()).toEqual(apps);
-    const special = createProvidersCache({ ...opts, scope: 'a","b', locale: 'c"' });
+    const special = getProvidersCache({ ...opts, locale: 'c"' });
     await special.get();
-    expect(await createProvidersCache({ ...opts, scope: "a", locale: 'b","c"' }).peek()).toBeUndefined();
-    expect(await createProvidersCache(opts).peek()).toMatchObject({ data: providers });
+    expect(await getProvidersCache({ ...opts, locale: 'b","c"' }).peek()).toBeUndefined();
+    expect(await getProvidersCache(opts).peek()).toMatchObject({ data: providers });
+  });
+
+  it("uses production as the default environment", async () => {
+    const { environment: _environment, ...withoutEnvironment } = options(providers);
+    await getProvidersCache(withoutEnvironment).get();
+    expect(await getProvidersCache(options(providers)).peek()).toMatchObject({ data: providers });
+  });
+
+  it("keeps account-independent data shared when request credentials change", async () => {
+    let token = "token-a";
+    const load = vi.fn(async () => modified({ ...providers, message: token }));
+    const cache = getProvidersCache({ ...options(providers), load });
+
+    expect(await cache.get()).toMatchObject({ message: "token-a" });
+    token = "token-b";
+    expect(await cache.get(undefined, { revalidate: true })).toMatchObject({ message: "token-b" });
+    expect(load).toHaveBeenCalledTimes(2);
   });
 
   it("includes service in Actions identity and supplies it to the loader", async () => {
     const load = vi.fn(async ({ service }: ActionsQuery) => modified({ ...actions, message: service }));
     const opts = { ...options(actions), load };
-    const gmail = createActionsCache(opts);
+    const gmail = getActionsCache(opts);
     expect(await gmail.get("gmail")).toMatchObject({ message: "gmail" });
     expect(await gmail.get("calendar")).toMatchObject({ message: "calendar" });
     expect(load).toHaveBeenCalledTimes(2);
     expect(load).toHaveBeenCalledWith({ locale: "zh-CN", service: "gmail" }, expect.any(Object));
-    expect(await createActionsCache(opts).get("gmail")).toMatchObject({ message: "gmail" });
+    expect(await getActionsCache(opts).get("gmail")).toMatchObject({ message: "gmail" });
     expect(load).toHaveBeenCalledTimes(2);
   });
 
   it("captures configuration and keeps host query mutation out of later requests", async () => {
     const opts = { ...options(providers) };
-    const load = vi.fn(async (query: { locale: string }) => {
+    const load = vi.fn(async (query: { locale: string }, _validation: unknown) => {
       const data = { ...providers, message: query.locale };
       query.locale = "mutated by loader";
       return modified(data);
     });
     opts.load = load;
-    const cache = createProvidersCache(opts);
-    opts.scope = "changed";
+    const cache = getProvidersCache(opts);
     opts.locale = "en-US";
     opts.load = vi.fn(async () => modified({ ...providers, message: "replacement" }));
     expect(await cache.get()).toMatchObject({ message: "zh-CN" });
     expect(await cache.get(undefined, { revalidate: true })).toMatchObject({ message: "zh-CN" });
     expect(opts.load).not.toHaveBeenCalled();
-    expect(await createProvidersCache(options(providers)).get()).toMatchObject({ message: "zh-CN" });
+    expect(await getProvidersCache(options(providers)).get()).toMatchObject({ message: "zh-CN" });
   });
 
-  it("clear covers all locales in the resource scope and preserves other scopes and resources", async () => {
+  it("clear covers all locales in the resource and preserves other resources", async () => {
     const opts = options(providers);
-    const primary = createProvidersCache(opts);
+    const primary = getProvidersCache(opts);
     await primary.get();
-    await createProvidersCache({ ...opts, locale: "en-US" }).get();
-    await createProvidersCache({ ...opts, scope: "staging" }).get();
-    await createAppCatalogCache(options(apps)).get();
+    const english = getProvidersCache({ ...opts, locale: "en-US" });
+    await english.get();
+    await getAppCatalogCache(options(apps)).get();
     await primary.clear();
     expect(await primary.peek()).toBeUndefined();
-    expect(await createProvidersCache({ ...opts, locale: "en-US" }).peek()).toBeUndefined();
-    expect(await createProvidersCache({ ...opts, scope: "staging" }).peek()).toMatchObject({ data: providers });
-    expect(await createAppCatalogCache(options(apps)).peek()).toMatchObject({ data: apps });
+    await english.dispose();
+    expect(await getProvidersCache({ ...opts, locale: "en-US" }).peek()).toBeUndefined();
+    expect(await getAppCatalogCache(options(apps)).peek()).toMatchObject({ data: apps });
   });
 
-  it.each(["scope", "locale"] as const)("rejects blank and nonstring %s synchronously", (field) => {
+  it.each(["environment", "locale"] as const)("rejects blank and nonstring %s synchronously", (field) => {
     for (const value of [" ", null, 1]) {
       expect(() =>
-        createProvidersCache({
+        getProvidersCache({
           ...options(providers),
           [field]: value,
-        } as unknown as OomolCacheOptions<ProvidersResponse>),
+        } as unknown as ProvidersCacheOptions),
       ).toThrow(TypeError);
     }
   });
 
   it("rejects a blank or nonstring service when it is used as a query", async () => {
     for (const service of [" ", null, 1]) {
-      const cache = createActionsCache(options(actions));
+      const cache = getActionsCache(options(actions));
       await expect(cache.get(service as string)).rejects.toThrow(TypeError);
       await expect(cache.peek(service as string)).rejects.toThrow(TypeError);
     }
   });
 
   it("validates the host loader before wrapping it", () => {
-    expect(() =>
-      createProvidersCache({ ...options(providers), load: null } as unknown as OomolCacheOptions<ProvidersResponse>),
-    ).toThrow("load must be a function");
-  });
-
-  it("uses the default scope when none is supplied", async () => {
-    const { scope: _scope, ...opts } = options(providers);
-    expect(await createProvidersCache(opts).get()).toEqual(providers);
+    expect(() => getProvidersCache({ ...options(providers), load: null } as unknown as ProvidersCacheOptions)).toThrow(
+      "load must be a function",
+    );
   });
 
   it("shares keyed OOMOL instances and removes them after disposal", async () => {
-    const opts = { ...options(providers), scope: "singleton-test" };
+    const opts = options(providers);
     const first = getProvidersCache(opts);
     const second = getProvidersCache({ ...opts });
     expect(second).toBe(first);
+    expect(getProvidersCache({ ...opts, environment: "staging" })).not.toBe(first);
     expect(await first.get()).toEqual(providers);
     await first.dispose();
     await expect(first.get()).rejects.toThrow("disposed");
@@ -178,10 +189,11 @@ describe("OOMOL cache factories", () => {
     expect(replacement).not.toBe(first);
     expect(await replacement.get()).toEqual(providers);
     await replacement.dispose();
+    await getProvidersCache({ ...opts, environment: "staging" }).dispose();
   });
 
-  it("uses the default singleton scope and keeps repeated disposal idempotent", async () => {
-    const { scope: _scope, ...opts } = options(providers);
+  it("keeps repeated singleton disposal idempotent", async () => {
+    const opts = options(providers);
     const cache = getProvidersCache(opts);
     expect(getProvidersCache({ ...opts })).toBe(cache);
     await cache.dispose();
@@ -189,7 +201,7 @@ describe("OOMOL cache factories", () => {
   });
 
   it("keeps the singleton registry across module copies in one runtime", async () => {
-    const opts = { ...options(providers), scope: "global-registry" };
+    const opts = options(providers);
     const first = getProvidersCache(opts);
     const registry = Reflect.get(globalThis, Symbol.for("oomol-lab.resource-cache.oomol-singletons"));
     expect(registry).toBeInstanceOf(Map);
@@ -201,13 +213,13 @@ describe("OOMOL cache factories", () => {
   });
 
   it("shares one singleton across Actions services and isolates App Catalog identity", async () => {
-    const actionsOptions = { ...options(actions), scope: "singleton-services" };
+    const actionsOptions = options(actions);
     const gmail = getActionsCache(actionsOptions);
     expect(getActionsCache({ ...actionsOptions })).toBe(gmail);
     expect(await gmail.get("gmail")).toEqual(actions);
     expect(await gmail.get("calendar")).toEqual(actions);
 
-    const appOptions = { ...options(apps), scope: "singleton-apps" };
+    const appOptions = options(apps);
     expect(getAppCatalogCache(appOptions)).toBe(getAppCatalogCache({ ...appOptions }));
     await gmail.dispose();
     await getAppCatalogCache(appOptions).dispose();

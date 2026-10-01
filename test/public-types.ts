@@ -11,15 +11,13 @@ import {
   type ActionsCache,
   type ActionsCacheOptions,
   type ActionsResponse,
+  type AppCatalogCacheOptions,
   type AppCatalogItem,
   type AppCatalogResponse,
-  createActionsCache,
-  createAppCatalogCache,
-  createProvidersCache,
   getActionsCache,
   getAppCatalogCache,
   getProvidersCache,
-  type OomolCacheOptions,
+  type ProvidersCacheOptions,
   type ProvidersResponse,
 } from "../src/oomol";
 
@@ -149,32 +147,35 @@ export type CatalogStatus = Assert<Equal<AppCatalogItem["status"], "available" |
 export type CatalogHealth = Assert<Equal<AppCatalogItem["healthScore"], number | null | undefined>>;
 export type CatalogCheckTime = Assert<Equal<AppCatalogItem["lastCheckedAt"], string | undefined>>;
 
-const oomolOptions: OomolCacheOptions<ProvidersResponse> = {
+const providerOptions: ProvidersCacheOptions = {
   locale: "en-US",
   schemaVersion: 1,
   maxAge: 0,
   decode: (value) => value as ProvidersResponse,
   load: async (_query, _validation) => ({ modified: true, data: providers, etag: null }),
 };
-export const providerCache = createProvidersCache(oomolOptions);
-export const sharedProviderCache = getProvidersCache(oomolOptions);
+export const providerCache = getProvidersCache(providerOptions);
+export const sharedProviderCache = getProvidersCache(providerOptions);
 const actionOptions: ActionsCacheOptions = {
-  ...oomolOptions,
+  environment: "production",
+  locale: "en-US",
+  schemaVersion: 1,
+  maxAge: 0,
   decode: (value) => value as ActionsResponse,
   load: async ({ service }) => ({ modified: true, data: { ...actions, message: service }, etag: null }),
 };
-export const actionCache = createActionsCache(actionOptions);
+export const actionCache = getActionsCache(actionOptions);
 export const sharedActionCache = getActionsCache(actionOptions);
-export const appCatalogCache = createAppCatalogCache({
-  ...oomolOptions,
+const appCatalogOptions: AppCatalogCacheOptions = {
+  environment: "production",
+  locale: "en-US",
+  schemaVersion: 1,
+  maxAge: 0,
   decode: (value) => value as AppCatalogResponse,
   load: async () => ({ modified: true, data: appCatalog, etag: null }),
-});
-export const sharedAppCatalogCache = getAppCatalogCache({
-  ...oomolOptions,
-  decode: (value) => value as AppCatalogResponse,
-  load: async () => ({ modified: true, data: appCatalog, etag: null }),
-});
+};
+export const appCatalogCache = getAppCatalogCache(appCatalogOptions);
+export const sharedAppCatalogCache = getAppCatalogCache(appCatalogOptions);
 export type ProviderCacheReturn = Assert<Equal<ReturnType<typeof providerCache.get>, Promise<ProvidersResponse>>>;
 export type ActionCacheReturn = Assert<
   Equal<ReturnType<typeof actionCache.peek>, Promise<undefined | CacheSnapshot<ActionsResponse>>>

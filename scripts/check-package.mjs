@@ -61,7 +61,6 @@ import * as oomol from "@oomol-lab/resource-cache/oomol";
 const require = createRequire(import.meta.url);
 const cjs = require("@oomol-lab/resource-cache");
 const oomolKeys = [
-  "createActionsCache", "createAppCatalogCache", "createProvidersCache",
   "getActionsCache", "getAppCatalogCache", "getProvidersCache", "oomolNamespaces",
 ];
 assert.deepEqual(Object.keys(oomol).sort(), oomolKeys);
@@ -76,14 +75,8 @@ for (const api of [esm, cjs]) {
   const session = api.createSessionCache({ ...options, sessionId: "login" });
   assert.equal(await session.get("session memory"), "session memory");
   await assert.rejects(session.dispose());
-  const providers = oomol.createProvidersCache({
-    scope: "smoke", locale: "en-US", schemaVersion: 1, maxAge: 100, decode: value => value,
-    load: async ({ locale }) => ({ modified: true, data: locale, etag: null }),
-  });
-  assert.equal(await providers.get(), "en-US");
-  await providers.dispose();
   const sharedOptions = {
-    scope: "smoke", locale: "en-US", schemaVersion: 1, maxAge: 100, decode: value => value,
+    environment: "smoke", locale: "en-US", schemaVersion: 1, maxAge: 100, decode: value => value,
     load: async ({ locale }) => ({ modified: true, data: locale, etag: null }),
   };
   const shared = oomol.getProvidersCache(sharedOptions);

@@ -22,17 +22,22 @@ without browser storage. Build before running `scripts/check-package.mjs` direct
 ## Public API and dependencies
 
 Keep generic cache factories and shared cache types in the root entrypoint. Keep OOMOL response types and their
-locale-scoped factories in `/oomol`, and maintain them when the API response contract changes. Preserve complete
-successful envelopes, including Providers metadata,
-AppCatalog summary, category and authentication aggregates, sprite metadata, and complete service Action catalogs.
+environment-and-locale-keyed factories in `/oomol`, and maintain them when the API response contract changes. Preserve complete
+successful envelopes, including Providers metadata, AppCatalog summary, category and authentication aggregates, sprite
+metadata, and complete service Action catalogs.
 
-Keep OOMOL factory namespaces stable and include locale in their cache key. Add a new factory only when an endpoint has
-its own response contract. Accept a host-provided non-secret `scope` for environment, user, team, or permission
-boundaries; do not make callers assemble OOMOL namespaces or locale keys. `get*Cache` uses a registry on `globalThis`
-under `Symbol.for("oomol-lab.resource-cache.oomol-singletons")`, keyed by resource, scope, locale, and schema version.
-An Actions cache uses `service` as its per-operation key, so one instance can serve multiple service catalogs. A
-successful `dispose()` removes that registry entry while leaving the old reference closed; `create*Cache` always creates
-an independent instance.
+Keep OOMOL factory namespaces stable and include deployment environment and locale in their cache identity. Add a new
+factory only when an endpoint has its own response contract. Providers, Actions and App Catalog responses are shared
+catalog data, so their cache identity must not include account, team, flow, permission, or token values. A request may
+require authentication for Providers or Actions; keep that concern in those factories' `load` functions. App Catalog
+is public and does not require credentials. Do not make callers assemble OOMOL namespaces or locale keys. The optional
+`environment` defaults to `production` and is reserved for deployment boundaries such as `staging`.
+`get*Cache` uses a registry on `globalThis` under
+`Symbol.for("oomol-lab.resource-cache.oomol-singletons")`, keyed by resource, environment, locale, and schema
+version. An Actions cache uses `service` as its per-operation key, so one instance can serve multiple service catalogs.
+A successful `dispose()` removes that registry entry while leaving the old reference closed. Keep the OOMOL surface to
+the shared `get*Cache` functions; use the generic cache API when a different endpoint genuinely returns account- or
+permission-specific data.
 
 The factories accept host-provided request and decoding functions. Keep framework, HTTP client, and backend runtime
 dependencies out of the package. Storage adapters and serializers are private implementation details; the current
