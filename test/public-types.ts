@@ -221,14 +221,14 @@ export const sharedAppCatalogCache = getAppCatalogCache(appCatalogOptions);
 const connectionsOptions: ConnectionsCacheOptions = {
   environment: "production",
   sessionId: "session-1",
-  teamName: "team-1",
+  ownerId: "owner-1",
   schemaVersion: 1,
   maxAge: 0,
   decode: (value) => value as ConnectionsResponse,
-  load: async ({ teamName }, { etag, signal }) =>
+  load: async ({ ownerId }, { etag, signal }) =>
     signal.aborted
       ? { modified: false, etag }
-      : { modified: true, data: { ...connections, message: teamName ?? "personal" }, etag: null },
+      : { modified: true, data: { ...connections, message: ownerId }, etag: null },
 };
 export const connectionsCache = getConnectionsCache(connectionsOptions);
 export const sharedConnectionsCache = getConnectionsCache(connectionsOptions);

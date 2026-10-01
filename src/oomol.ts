@@ -18,7 +18,7 @@ export interface ActionsQuery extends OomolQuery {
 }
 
 export interface ConnectionsQuery {
-  readonly teamName?: string;
+  readonly ownerId: string;
 }
 
 interface OomolCacheBaseOptions<T> {
@@ -51,8 +51,8 @@ export interface ConnectionsCacheOptions {
   readonly environment?: string;
   /** Nonempty, non-secret identifier for the current login session. */
   readonly sessionId: string;
-  /** Team scope sent to the host loader. Omit it for the personal scope. */
-  readonly teamName?: string;
+  /** Stable owner identity sent to the host loader. */
+  readonly ownerId: string;
   readonly schemaVersion: number;
   readonly maxAge: number;
   readonly decode: (value: unknown) => ConnectionsResponse;
@@ -96,11 +96,11 @@ function createOomolCache<T>(resource: string, options: OomolFactoryOptions<T>, 
 
 function createConnectionsCacheInternal(
   options: ConnectionsCacheOptions,
-  validated: { environment: string; teamName?: string },
+  validated: { environment: string; ownerId: string },
 ): ConnectionsCache {
-  const { environment, teamName } = validated;
+  const { environment, ownerId } = validated;
   const { load } = options;
-  const key = JSON.stringify([teamName ?? null]);
+  const key = JSON.stringify([ownerId]);
   return createSessionCache({
     namespace: JSON.stringify([oomolNamespaces.connections, environment]),
     schemaVersion: options.schemaVersion,
@@ -108,7 +108,7 @@ function createConnectionsCacheInternal(
     sessionId: options.sessionId,
     key: () => key,
     decode: options.decode,
-    load: (_query, validation) => load({ teamName }, validation),
+    load: (_query, validation) => load({ ownerId }, validation),
   });
 }
 
@@ -129,24 +129,23 @@ function normalizeEnvironment(value: unknown): string {
   return environment;
 }
 
-function normalizeTeamName(value: unknown): string | undefined {
-  if (value === undefined) return undefined;
-  if (typeof value !== "string" || !value.trim()) throw new TypeError("teamName must be nonempty");
+function normalizeOwnerId(value: unknown): string {
+  if (typeof value !== "string" || !value.trim()) throw new TypeError("ownerId must be nonempty");
   return value;
 }
 
 function validateConnectionsOptions(options: {
   readonly environment?: unknown;
   readonly sessionId?: unknown;
-  readonly teamName?: unknown;
+  readonly ownerId: unknown;
   readonly load?: unknown;
-}): { environment: string; teamName?: string } {
+}): { environment: string; ownerId: string } {
   const environment = normalizeEnvironment(options.environment);
   if (typeof options.sessionId !== "string" || !options.sessionId.trim())
     throw new TypeError("sessionId must be nonempty");
-  const teamName = normalizeTeamName(options.teamName);
+  const ownerId = normalizeOwnerId(options.ownerId);
   if (typeof options.load !== "function") throw new TypeError("load must be a function");
-  return { environment, teamName };
+  return { environment, ownerId };
 }
 
 /** Create an IndexedDB cache for the account-independent GET /v1/providers response, keyed by environment and locale. */
@@ -237,10 +236,10 @@ export function getAppCatalogCache(options: AppCatalogCacheOptions): OomolCache<
   );
 }
 
-/** Return the shared sessionStorage cache for one login session and team scope. */
+/** Return the shared sessionStorage cache for one login session and owner scope. */
 export function getConnectionsCache(options: ConnectionsCacheOptions): ConnectionsCache {
   const validated = validateConnectionsOptions(options);
-  const query = { teamName: validated.teamName };
+  const query = { ownerId: validated.ownerId };
   return getSingleton(singletonKey(oomolNamespaces.connections, options, query, options.sessionId), () =>
     createConnectionsCacheInternal(options, validated),
   );

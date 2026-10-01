@@ -36,7 +36,7 @@ is public and does not require credentials. Do not make callers assemble OOMOL n
 `Symbol.for("oomol-lab.resource-cache.oomol-singletons")`, keyed by resource, environment, response scope, and schema
 version. An Actions cache uses `service` as its per-operation key, so one instance can serve multiple service catalogs.
 A Connections cache is account-scoped: it uses sessionStorage, requires a non-secret `sessionId`, and includes the
-optional `teamName` in its identity. Its `dispose()` removes all Connections schema versions for that session.
+required `ownerId` in its identity. Its `dispose()` removes all Connections schema versions for that session.
 A successful `dispose()` removes that registry entry while leaving the old reference closed. Keep the OOMOL surface to
 the shared `get*Cache` functions; use the generic cache API when a different endpoint genuinely returns an account- or
 permission-specific response contract.

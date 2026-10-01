@@ -115,7 +115,7 @@ function connectionOptions(overrides: Partial<ConnectionsCacheOptions> = {}) {
   return {
     environment: "production",
     sessionId: "session-a",
-    teamName: "team/a",
+    ownerId: "owner/a",
     schemaVersion: 1,
     maxAge: 100,
     decode: vi.fn((value) => value as ConnectionsResponse),
@@ -294,7 +294,7 @@ describe("OOMOL cache factories", () => {
     const cache = getConnectionsCache(opts);
 
     expect(await cache.get()).toEqual(connections);
-    expect(opts.load).toHaveBeenCalledWith({ teamName: "team/a" }, { etag: null, signal: expect.any(AbortSignal) });
+    expect(opts.load).toHaveBeenCalledWith({ ownerId: "owner/a" }, { etag: null, signal: expect.any(AbortSignal) });
     expect(opts.decode).not.toHaveBeenCalled();
     expect(await getConnectionsCache(opts).get()).toEqual(connections);
     expect(opts.load).toHaveBeenCalledTimes(1);
@@ -302,7 +302,7 @@ describe("OOMOL cache factories", () => {
     vi.mocked(opts.load).mockResolvedValueOnce({ modified: false });
     expect(await cache.get(undefined, { revalidate: true })).toEqual(connections);
     expect(opts.load).toHaveBeenLastCalledWith(
-      { teamName: "team/a" },
+      { ownerId: "owner/a" },
       { etag: '"v1"', signal: expect.any(AbortSignal) },
     );
     expect(await cache.peek()).toMatchObject({ data: connections, etag: '"v1"' });
@@ -312,23 +312,23 @@ describe("OOMOL cache factories", () => {
     const opts = connectionOptions();
     const team = getConnectionsCache(opts);
     expect(getConnectionsCache({ ...opts })).toBe(team);
-    expect(getConnectionsCache({ ...opts, teamName: "team/b" })).not.toBe(team);
+    expect(getConnectionsCache({ ...opts, ownerId: "owner/b" })).not.toBe(team);
     expect(getConnectionsCache({ ...opts, sessionId: "session-b" })).not.toBe(team);
     expect(getConnectionsCache({ ...opts, environment: "staging" })).not.toBe(team);
     expect(getConnectionsCache({ ...opts, schemaVersion: 2 })).not.toBe(team);
 
     await team.get();
-    expect(await getConnectionsCache({ ...opts, teamName: "team/b" }).peek()).toBeUndefined();
+    expect(await getConnectionsCache({ ...opts, ownerId: "owner/b" }).peek()).toBeUndefined();
     expect(await getConnectionsCache({ ...opts, sessionId: "session-b" }).peek()).toBeUndefined();
     expect(await getConnectionsCache({ ...opts, environment: "staging" }).peek()).toBeUndefined();
     expect(await getConnectionsCache({ ...opts, schemaVersion: 2 }).peek()).toBeUndefined();
   });
 
-  it("disposes every team scope for one session without touching another session", async () => {
-    const personal = getConnectionsCache({ ...connectionOptions(), teamName: undefined });
+  it("disposes every owner scope for one session without touching another session", async () => {
+    const firstOwner = getConnectionsCache({ ...connectionOptions(), ownerId: "owner/b" });
     const team = getConnectionsCache(connectionOptions());
     const otherSession = getConnectionsCache({ ...connectionOptions(), sessionId: "session-b" });
-    await personal.get();
+    await firstOwner.get();
     await team.get();
     await otherSession.get();
 
@@ -339,15 +339,15 @@ describe("OOMOL cache factories", () => {
     expect(storage.values.keys().next().value).toContain('"session-b"');
   });
 
-  it("rejects invalid Connections session and team options", () => {
+  it("rejects invalid Connections session and owner options", () => {
     const opts = connectionOptions();
     expect(() => getConnectionsCache({ ...opts, sessionId: " " })).toThrow("sessionId must be nonempty");
     expect(() => getConnectionsCache({ ...opts, sessionId: null } as unknown as ConnectionsCacheOptions)).toThrow(
       "sessionId must be nonempty",
     );
-    expect(() => getConnectionsCache({ ...opts, teamName: " " })).toThrow("teamName must be nonempty");
-    expect(() => getConnectionsCache({ ...opts, teamName: 1 } as unknown as ConnectionsCacheOptions)).toThrow(
-      "teamName must be nonempty",
+    expect(() => getConnectionsCache({ ...opts, ownerId: " " })).toThrow("ownerId must be nonempty");
+    expect(() => getConnectionsCache({ ...opts, ownerId: 1 } as unknown as ConnectionsCacheOptions)).toThrow(
+      "ownerId must be nonempty",
     );
     expect(() => getConnectionsCache({ ...opts, load: null } as unknown as ConnectionsCacheOptions)).toThrow(
       "load must be a function",

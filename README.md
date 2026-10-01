@@ -199,9 +199,8 @@ const calendar = await actions.get('calendar')
 ```
 
 Connections are scoped to a login session and use `sessionStorage`. The required `sessionId` must be a stable,
-non-secret login identifier, never an access token. `teamName` is optional for the personal scope and is part of the
-cache identity when provided. Call `dispose()` when the session ends; it removes all connection scopes for that login
-session.
+non-secret login identifier, never an access token. `ownerId` identifies the connection owner and is part of the cache
+identity. Call `dispose()` when the session ends; it removes all connection scopes for that login session.
 
 ```ts
 import { getConnectionsCache } from '@oomol-lab/resource-cache/oomol'
@@ -209,11 +208,11 @@ import { getConnectionsCache } from '@oomol-lab/resource-cache/oomol'
 const connections = getConnectionsCache({
   environment: 'production',
   sessionId: loginSessionId,
-  teamName: currentTeamName,
+  ownerId: currentOwnerId,
   schemaVersion: 1,
   maxAge: 60_000,
   decode: decodeConnections,
-  load: ({ teamName }, validation) => api.getConnections({ teamName, ...validation }),
+  load: ({ ownerId }, validation) => api.getConnections({ ownerId, ...validation }),
 })
 
 const response = await connections.get()

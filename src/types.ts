@@ -17,7 +17,7 @@ export interface CacheOptions<T, Q> {
   /** Finite nonnegative milliseconds. Zero always requires validation. */
   readonly maxAge: number;
   /**
-   * Stable response identity. Authentication, locale and team scope belong here only when they change the response.
+   * Stable response identity. Authentication, locale and resource scope belong here only when they change the response.
    * The OOMOL catalog factories are account-independent and define their own identity.
    */
   readonly key: (query: Q) => string;
