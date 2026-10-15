@@ -295,7 +295,7 @@
             >
           </h2>
           <pre
-          ><code class="ts"><span class="hl-3">import</span><span class="hl-1"> </span><span class="hl-3">type</span><span class="hl-1"> {</span><br/><span class="hl-1">  </span><span class="hl-4">ProvidersResponse</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-4">ActionsResponse</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-4">AppCatalogResponse</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-4">ConnectionsResponse</span><span class="hl-1">,</span><br/><span class="hl-1">} </span><span class="hl-3">from</span><span class="hl-1"> </span><span class="hl-2">&#39;@oomol-lab/resource-cache/oomol&#39;</span>
+          ><code class="ts"><span class="hl-3">import</span><span class="hl-1"> </span><span class="hl-3">type</span><span class="hl-1"> {</span><br/><span class="hl-1">  </span><span class="hl-4">ProvidersResponse</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-4">ActionsResponse</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-4">AppCatalogResponse</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-4">AppMarketingResponse</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-4">ConnectionsResponse</span><span class="hl-1">,</span><br/><span class="hl-1">} </span><span class="hl-3">from</span><span class="hl-1"> </span><span class="hl-2">&#39;@oomol-lab/resource-cache/oomol&#39;</span>
 </code><button type="button">Copy</button></pre>
 
           <table>
@@ -322,6 +322,13 @@
                 </td>
               </tr>
               <tr>
+                <td><code>AppMarketingResponse</code></td>
+                <td>
+                  <code>/public/v1/apps/{service}</code>, including website marketing content, optional landing content,
+                  capabilities, and locale metadata.
+                </td>
+              </tr>
+              <tr>
                 <td><code>ConnectionsResponse</code></td>
                 <td><code>/v1/connections</code>, including connection app views and summary metadata.</td>
               </tr>
@@ -330,20 +337,22 @@
           <p>Validate these responses in <code>load</code> and <code>decode</code>.</p>
           <p>
             The OOMOL entry exports separate configuration types, <code>ProvidersCacheOptions</code>,
-            <code>ActionsCacheOptions</code>, and
-            <code>AppCatalogCacheOptions</code>, for the three catalog factories. These factories serve catalog data
+            <code>ActionsCacheOptions</code>,
+            <code>AppCatalogCacheOptions</code>, and <code>AppMarketingCacheOptions</code>. These factories serve data
             shared across accounts, teams and flows. They use fixed namespaces and include <code>environment</code> and
-            <code>locale</code> (and, for Actions, <code>service</code>) in the cache identity, so callers do not need
-            to construct namespace or key strings. <code>environment</code> defaults to <code>production</code>
+            <code>locale</code> (and, for Actions and App Marketing, <code>service</code>) in the cache identity, so
+            callers do not need to construct namespace or key strings. <code>environment</code> defaults to
+            <code>production</code>
             and can be set to values such as <code>staging</code> when the host serves a separate deployment. A request
             may still require an access token. Keep that token in the Providers or Actions request layer inside
-            <code>load</code>; App Catalog is public and does not require credentials. Credentials must not be used as a
-            cache key, namespace, or environment value.
+            <code>load</code>; App Catalog and App Marketing are public and do not require credentials. Credentials must
+            not be used as a cache key, namespace, or environment value.
           </p>
           <p>
-            Use <code>getProvidersCache</code>, <code>getActionsCache</code>, and <code>getAppCatalogCache</code>. They
-            return the shared cache for an environment, locale and schema version. The first call fixes
-            <code>load</code>, <code>decode</code>, and <code>maxAge</code> for that identity; provide a stable
+            Use <code>getProvidersCache</code>, <code>getActionsCache</code>, <code>getAppCatalogCache</code>, and
+            <code>getAppMarketingCache</code>. They return the shared cache for an environment, locale and schema
+            version. The first call fixes <code>load</code>, <code>decode</code>, and <code>maxAge</code> for that
+            identity; provide a stable
             <code>load</code>
             function that reads the current request credentials. The singleton registry is shared across package copies
             in the same JavaScript runtime.
@@ -360,6 +369,22 @@
           ><code class="ts"><span class="hl-3">import</span><span class="hl-1"> { </span><span class="hl-4">getActionsCache</span><span class="hl-1"> } </span><span class="hl-3">from</span><span class="hl-1"> </span><span class="hl-2">&#39;@oomol-lab/resource-cache/oomol&#39;</span><br/><br/><span class="hl-5">const</span><span class="hl-1"> </span><span class="hl-7">actions</span><span class="hl-1"> = </span><span class="hl-0">getActionsCache</span><span class="hl-1">({</span><br/><span class="hl-1">  </span><span class="hl-4">locale:</span><span class="hl-1"> </span><span class="hl-2">&#39;zh-CN&#39;</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-4">schemaVersion:</span><span class="hl-1"> </span><span class="hl-8">1</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-4">maxAge:</span><span class="hl-1"> </span><span class="hl-8">10</span><span class="hl-1"> * </span><span class="hl-8">60_000</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-4">decode:</span><span class="hl-1"> </span><span class="hl-4">decodeActions</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-0">load</span><span class="hl-4">:</span><span class="hl-1"> ({ </span><span class="hl-4">locale</span><span class="hl-1">, </span><span class="hl-4">service</span><span class="hl-1"> }, </span><span class="hl-4">validation</span><span class="hl-1">) </span><span class="hl-5">=&gt;</span><span class="hl-1"> </span><span class="hl-4">api</span><span class="hl-1">.</span><span class="hl-0">getActions</span><span class="hl-1">({ </span><span class="hl-4">locale</span><span class="hl-1">, </span><span class="hl-4">service</span><span class="hl-1">, ...</span><span class="hl-4">validation</span><span class="hl-1"> }),</span><br/><span class="hl-1">})</span><br/><br/><span class="hl-5">const</span><span class="hl-1"> </span><span class="hl-7">gmail</span><span class="hl-1"> = </span><span class="hl-3">await</span><span class="hl-1"> </span><span class="hl-4">actions</span><span class="hl-1">.</span><span class="hl-0">get</span><span class="hl-1">(</span><span class="hl-2">&#39;gmail&#39;</span><span class="hl-1">)</span><br/><span class="hl-5">const</span><span class="hl-1"> </span><span class="hl-7">calendar</span><span class="hl-1"> = </span><span class="hl-3">await</span><span class="hl-1"> </span><span class="hl-4">actions</span><span class="hl-1">.</span><span class="hl-0">get</span><span class="hl-1">(</span><span class="hl-2">&#39;calendar&#39;</span><span class="hl-1">)</span>
 </code><button type="button">Copy</button></pre>
 
+          <p>
+            App Marketing also accepts a service per operation and stores the complete website marketing response in
+            IndexedDB:
+          </p>
+          <pre
+          ><code class="ts"><span class="hl-3">import</span><span class="hl-1"> { </span><span class="hl-4">getAppMarketingCache</span><span class="hl-1"> } </span><span class="hl-3">from</span><span class="hl-1"> </span><span class="hl-2">&#39;@oomol-lab/resource-cache/oomol&#39;</span><br/><br/><span class="hl-5">const</span><span class="hl-1"> </span><span class="hl-7">marketing</span><span class="hl-1"> = </span><span class="hl-0">getAppMarketingCache</span><span class="hl-1">({</span><br/><span class="hl-1">  </span><span class="hl-4">locale:</span><span class="hl-1"> </span><span class="hl-2">&#39;zh-CN&#39;</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-4">schemaVersion:</span><span class="hl-1"> </span><span class="hl-8">1</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-4">maxAge:</span><span class="hl-1"> </span><span class="hl-8">10</span><span class="hl-1"> * </span><span class="hl-8">60_000</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-4">decode:</span><span class="hl-1"> </span><span class="hl-4">decodeAppMarketing</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-5">async</span><span class="hl-1"> </span><span class="hl-0">load</span><span class="hl-1">({ </span><span class="hl-4">locale</span><span class="hl-1">, </span><span class="hl-4">service</span><span class="hl-1"> }, { </span><span class="hl-4">etag</span><span class="hl-1">, </span><span class="hl-4">signal</span><span class="hl-1"> }) {</span><br/><span class="hl-1">    </span><span class="hl-5">const</span><span class="hl-1"> </span><span class="hl-7">response</span><span class="hl-1"> = </span><span class="hl-3">await</span><span class="hl-1"> </span><span class="hl-0">fetch</span><span class="hl-1">(</span><br/><span class="hl-1">      </span><span class="hl-2">`https://connector.oomol.com/public/v1/apps/</span><span class="hl-5">${</span><span class="hl-0">encodeURIComponent</span><span class="hl-9">(</span><span class="hl-4">service</span><span class="hl-9">)</span><span class="hl-5">}</span><span class="hl-2">?locale=</span><span class="hl-5">${</span><span class="hl-0">encodeURIComponent</span><span class="hl-9">(</span><span class="hl-4">locale</span><span class="hl-9">)</span><span class="hl-5">}</span><span class="hl-2">`</span><span class="hl-1">,</span><br/><span class="hl-1">      { </span><span class="hl-4">headers:</span><span class="hl-1"> </span><span class="hl-4">etag</span><span class="hl-1"> === </span><span class="hl-5">null</span><span class="hl-1"> ? {} : { </span><span class="hl-2">&#39;If-None-Match&#39;</span><span class="hl-4">:</span><span class="hl-1"> </span><span class="hl-4">etag</span><span class="hl-1"> }, </span><span class="hl-4">signal</span><span class="hl-1"> },</span><br/><span class="hl-1">    )</span><br/><span class="hl-1">    </span><span class="hl-3">if</span><span class="hl-1"> (</span><span class="hl-4">response</span><span class="hl-1">.</span><span class="hl-4">status</span><span class="hl-1"> === </span><span class="hl-8">304</span><span class="hl-1">) {</span><br/><span class="hl-1">      </span><span class="hl-3">return</span><span class="hl-1"> { </span><span class="hl-4">modified:</span><span class="hl-1"> </span><span class="hl-5">false</span><span class="hl-1">, </span><span class="hl-4">etag:</span><span class="hl-1"> </span><span class="hl-4">response</span><span class="hl-1">.</span><span class="hl-4">headers</span><span class="hl-1">.</span><span class="hl-0">get</span><span class="hl-1">(</span><span class="hl-2">&#39;ETag&#39;</span><span class="hl-1">) ?? </span><span class="hl-5">undefined</span><span class="hl-1"> }</span><br/><span class="hl-1">    }</span><br/><span class="hl-1">    </span><span class="hl-3">if</span><span class="hl-1"> (!</span><span class="hl-4">response</span><span class="hl-1">.</span><span class="hl-4">ok</span><span class="hl-1">) </span><span class="hl-3">throw</span><span class="hl-1"> </span><span class="hl-5">new</span><span class="hl-1"> </span><span class="hl-0">Error</span><span class="hl-1">(</span><span class="hl-2">`Loading app marketing failed: </span><span class="hl-5">${</span><span class="hl-4">response</span><span class="hl-9">.</span><span class="hl-4">status</span><span class="hl-5">}</span><span class="hl-2">`</span><span class="hl-1">)</span><br/><span class="hl-1">    </span><span class="hl-3">return</span><span class="hl-1"> {</span><br/><span class="hl-1">      </span><span class="hl-4">modified:</span><span class="hl-1"> </span><span class="hl-5">true</span><span class="hl-1">,</span><br/><span class="hl-1">      </span><span class="hl-4">data:</span><span class="hl-1"> </span><span class="hl-0">decodeAppMarketing</span><span class="hl-1">(</span><span class="hl-3">await</span><span class="hl-1"> </span><span class="hl-4">response</span><span class="hl-1">.</span><span class="hl-0">json</span><span class="hl-1">()),</span><br/><span class="hl-1">      </span><span class="hl-4">etag:</span><span class="hl-1"> </span><span class="hl-4">response</span><span class="hl-1">.</span><span class="hl-4">headers</span><span class="hl-1">.</span><span class="hl-0">get</span><span class="hl-1">(</span><span class="hl-2">&#39;ETag&#39;</span><span class="hl-1">),</span><br/><span class="hl-1">    }</span><br/><span class="hl-1">  },</span><br/><span class="hl-1">})</span><br/><br/><span class="hl-5">const</span><span class="hl-1"> </span><span class="hl-7">response</span><span class="hl-1"> = </span><span class="hl-3">await</span><span class="hl-1"> </span><span class="hl-4">marketing</span><span class="hl-1">.</span><span class="hl-0">get</span><span class="hl-1">(</span><span class="hl-2">&#39;gmail&#39;</span><span class="hl-1">)</span><br/><span class="hl-5">const</span><span class="hl-1"> </span><span class="hl-7">content</span><span class="hl-1"> = </span><span class="hl-4">response</span><span class="hl-1">.</span><span class="hl-4">data</span><span class="hl-1">.</span><span class="hl-4">content</span><span class="hl-1"> </span><span class="hl-10">// May be null when no editorial content exists.</span>
+</code><button type="button">Copy</button></pre>
+
+          <p>
+            Supply your response validator as <code>decodeAppMarketing</code>. Send the configured
+            <code>locale</code> explicitly in the request so the cache identity matches the requested language instead
+            of relying on a changing <code>Accept-Language</code> header. The response retains <code>meta.locale</code>,
+            <code>meta.contentLocale</code>, and <code>meta.availableContentLocales</code> to describe language
+            fallbacks. A successful response with <code>content: null</code> is cached normally; failed requests reject
+            without replacing cached data.
+          </p>
           <p>
             Connections are scoped to a login session and use <code>sessionStorage</code>. The required
             <code>sessionId</code> must be a stable, non-secret login identifier, never an access token.
