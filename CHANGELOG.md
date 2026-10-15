@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.1.5](https://github.com/oomol-lab/resource-cache/compare/v0.1.4...v0.1.5) (2026-10-15)
+
+### Features
+
+* add App Marketing cache and response types to resource-cache ([2715eed](https://github.com/oomol-lab/resource-cache/commit/2715eed35d16e6104945910988a56676f5f43934))
+
 ## [0.1.4](https://github.com/oomol-lab/resource-cache/compare/v0.1.3...v0.1.4) (2026-10-01)
 
 ### Features
