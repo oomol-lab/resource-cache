@@ -6,6 +6,7 @@ export const oomolNamespaces = {
   providers: "oomol:providers",
   actions: "oomol:actions",
   appCatalog: "oomol:app-catalog",
+  appMarketing: "oomol:app-marketing",
   connections: "oomol:connections",
 } as const;
 
@@ -14,6 +15,10 @@ export interface OomolQuery {
 }
 
 export interface ActionsQuery extends OomolQuery {
+  readonly service: string;
+}
+
+export interface AppMarketingQuery extends OomolQuery {
   readonly service: string;
 }
 
@@ -46,6 +51,11 @@ export interface AppCatalogCacheOptions extends OomolCacheBaseOptions<AppCatalog
   readonly load: (query: OomolQuery, validation: CacheValidation) => Promise<LoadResult<AppCatalogResponse>>;
 }
 
+export interface AppMarketingCacheOptions extends OomolCacheBaseOptions<AppMarketingResponse> {
+  /** Load public app marketing content. Send the query locale explicitly; this request does not require credentials. */
+  readonly load: (query: AppMarketingQuery, validation: CacheValidation) => Promise<LoadResult<AppMarketingResponse>>;
+}
+
 export interface ConnectionsCacheOptions {
   /** Deployment environment used to separate hosts such as production and staging. Defaults to `production`. */
   readonly environment?: string;
@@ -60,12 +70,13 @@ export interface ConnectionsCacheOptions {
   readonly load: (query: ConnectionsQuery, validation: CacheValidation) => Promise<LoadResult<ConnectionsResponse>>;
 }
 
-type OomolFactoryOptions<T> = OomolCacheBaseOptions<T> & {
-  readonly load: (query: OomolQuery, validation: CacheValidation) => Promise<LoadResult<T>>;
+type OomolFactoryOptions<T, Q extends OomolQuery = OomolQuery> = OomolCacheBaseOptions<T> & {
+  readonly load: (query: Q, validation: CacheValidation) => Promise<LoadResult<T>>;
 };
 
 export type OomolCache<T> = ResourceCache<T, void>;
 export type ActionsCache = ResourceCache<ActionsResponse, string>;
+export type AppMarketingCache = ResourceCache<AppMarketingResponse, string>;
 export type ConnectionsCache = ResourceCache<ConnectionsResponse, void>;
 
 type SingletonRegistry = Map<string, ResourceCache<unknown, unknown>>;
@@ -158,12 +169,15 @@ function createProvidersCacheInternal(options: ProvidersCacheOptions): OomolCach
   return createOomolCache(oomolNamespaces.providers, options, { locale: options.locale });
 }
 
-/** Create an IndexedDB cache for account-independent GET /v1/actions?service=…, keyed by environment, locale and service. */
-function createActionsCacheInternal(options: ActionsCacheOptions): ActionsCache {
+/** Create an account-independent cache keyed by environment, locale and service. */
+function createServiceCache<T>(
+  resource: string,
+  options: OomolFactoryOptions<T, OomolQuery & { readonly service: string }>,
+): ResourceCache<T, string> {
   const environment = validateOomolOptions(options);
   const { locale, load } = options;
-  return createPersistentCache<ActionsResponse, string>({
-    namespace: readableKey(oomolNamespaces.actions, environment),
+  return createPersistentCache<T, string>({
+    namespace: readableKey(resource, environment),
     schemaVersion: options.schemaVersion,
     maxAge: options.maxAge,
     key: (service) => {
@@ -227,11 +241,10 @@ export function getProvidersCache(options: ProvidersCacheOptions): OomolCache<Pr
   );
 }
 
-/** Return the shared Actions cache for one environment, locale and schema version. */
+/** Return the shared GET /v1/actions?service=… cache for one environment, locale and schema version. */
 export function getActionsCache(options: ActionsCacheOptions): ActionsCache {
-  const query = { locale: options.locale };
-  return getSingleton(singletonKey(oomolNamespaces.actions, options, [query.locale]), () =>
-    createActionsCacheInternal(options),
+  return getSingleton(singletonKey(oomolNamespaces.actions, options, [options.locale]), () =>
+    createServiceCache(oomolNamespaces.actions, options),
   );
 }
 
@@ -240,6 +253,13 @@ export function getAppCatalogCache(options: AppCatalogCacheOptions): OomolCache<
   const query = { locale: options.locale };
   return getSingleton(singletonKey(oomolNamespaces.appCatalog, options, [query.locale]), () =>
     createAppCatalogCacheInternal(options),
+  );
+}
+
+/** Return the shared public app marketing cache for one environment, locale and schema version, queried by service. */
+export function getAppMarketingCache(options: AppMarketingCacheOptions): AppMarketingCache {
+  return getSingleton(singletonKey(oomolNamespaces.appMarketing, options, [options.locale]), () =>
+    createServiceCache(oomolNamespaces.appMarketing, options),
   );
 }
 
@@ -352,6 +372,66 @@ export interface AppCatalogResponse {
     categories: { id: string; displayName: string; providerCount: number; actionCount: number }[];
     authTypes: { id: CredentialAuthType; displayName: string; providerCount: number }[];
     iconSprite: ProviderIconSprite | null;
+  };
+}
+
+export type AppMarketingLocale = "en" | "zh-CN";
+
+export interface AppMarketingContent {
+  title: string;
+  description: string;
+  headline: string;
+  intro: string;
+  overview: string;
+  setup: { summary: string; requirements: string[]; notes: string[] };
+  useCases: {
+    id: string;
+    title: string;
+    description: string;
+    prompt: string;
+    requirements: { service: string; actionIds: string[]; triggerIds: string[] }[];
+  }[];
+  capabilityGroups: { id: string; title: string; description: string; actionIds: string[] }[];
+  faq: { id: string; question: string; answer: string }[];
+  relatedServices: string[];
+  landing?: {
+    taskSummary: string;
+    definition: string;
+    about: string;
+    heroCaption: string;
+    demo: {
+      useCaseId: string;
+      request: string;
+      reply: string;
+      result: {
+        label: string;
+        title: string;
+        summary: string;
+        items: { id: string; label: string; text: string }[];
+      };
+      steps: { id: string; title: string; description: string }[];
+    };
+    relatedUseCaseIds: string[];
+  };
+}
+
+export interface AppMarketingData extends ProviderListItem {
+  connectionMethods: { authType: string; oauthClientPolicy?: "default_only" | "user_required" }[];
+  marketplace: { id: string; pricing: "free" | "metered"; actionIds: string[] } | null;
+  actions: { id: string; name: string; displayName: string; description: string }[];
+  triggers: { id: string; name: string; description: string; deliveryMode: "poll" | "push" }[];
+  content: AppMarketingContent | null;
+}
+
+/** Complete GET /public/v1/apps/{service} success response for localized website marketing content. */
+export interface AppMarketingResponse {
+  success: true;
+  message: string;
+  data: AppMarketingData;
+  meta: {
+    locale: AppMarketingLocale;
+    contentLocale: AppMarketingLocale | null;
+    availableContentLocales: AppMarketingLocale[];
   };
 }
 

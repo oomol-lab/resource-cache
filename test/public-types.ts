@@ -14,11 +14,16 @@ import {
   type AppCatalogCacheOptions,
   type AppCatalogItem,
   type AppCatalogResponse,
+  type AppMarketingCache,
+  type AppMarketingCacheOptions,
+  type AppMarketingContent,
+  type AppMarketingResponse,
   type ConnectionsCache,
   type ConnectionsCacheOptions,
   type ConnectionsResponse,
   getActionsCache,
   getAppCatalogCache,
+  getAppMarketingCache,
   getConnectionsCache,
   getProvidersCache,
   type ProvidersCacheOptions,
@@ -146,6 +151,65 @@ export const minimalAppCatalog = {
     iconSprite: null,
   },
 } satisfies AppCatalogResponse;
+
+export const appMarketing = {
+  success: true,
+  message: "",
+  data: {
+    service: "gmail",
+    displayName: "Gmail",
+    searchAliases: ["mail"],
+    iconUrl: null,
+    homepageUrl: null,
+    categories: [{ id: "email", displayName: "Email" }],
+    authTypes: ["oauth2"],
+    iconSpritePosition: null,
+    connectionMethods: [{ authType: "oauth2", oauthClientPolicy: "default_only" }],
+    marketplace: null,
+    actions: [{ id: "gmail.read", name: "read", displayName: "Read", description: "Read mail" }],
+    triggers: [{ id: "gmail.received", name: "received", description: "New mail", deliveryMode: "poll" }],
+    content: {
+      title: "Gmail",
+      description: "Email automation",
+      headline: "Automate email",
+      intro: "Connect your inbox",
+      overview: "Read and organize mail",
+      setup: { summary: "Connect Gmail", requirements: ["Gmail account"], notes: [] },
+      useCases: [
+        {
+          id: "summarize",
+          title: "Summarize mail",
+          description: "Summarize unread mail",
+          prompt: "Summarize my mail",
+          requirements: [{ service: "gmail", actionIds: ["gmail.read"], triggerIds: [] }],
+        },
+      ],
+      capabilityGroups: [{ id: "read", title: "Read", description: "Read mail", actionIds: ["gmail.read"] }],
+      faq: [{ id: "access", question: "What is required?", answer: "A Gmail account" }],
+      relatedServices: ["calendar"],
+      landing: {
+        taskSummary: "Summarize mail",
+        definition: "Email automation",
+        about: "Gmail",
+        heroCaption: "Your inbox",
+        demo: {
+          useCaseId: "summarize",
+          request: "Summarize my mail",
+          reply: "Here is your summary",
+          result: {
+            label: "Inbox",
+            title: "Summary",
+            summary: "One message",
+            items: [{ id: "mail", label: "Mail", text: "Hello" }],
+          },
+          steps: [{ id: "read", title: "Read", description: "Read unread mail" }],
+        },
+        relatedUseCaseIds: ["summarize"],
+      },
+    },
+  },
+  meta: { locale: "zh-CN", contentLocale: "en", availableContentLocales: ["en"] },
+} satisfies AppMarketingResponse;
 
 export const connections = {
   success: true,
@@ -295,3 +359,45 @@ export const incompleteCatalogItem: AppCatalogItem = providers.data[0];
 
 // @ts-expect-error ConnectionsResponse must retain complete summary metadata
 export const incompleteConnectionsMeta: ConnectionsResponse = { success: true, message: "OK", data: [] };
+
+const appMarketingOptions: AppMarketingCacheOptions = {
+  locale: "zh-CN",
+  schemaVersion: 1,
+  maxAge: 100,
+  decode: (value) => value as AppMarketingResponse,
+  load: async ({ locale, service }, { etag, signal }) =>
+    signal.aborted
+      ? { modified: false, etag }
+      : {
+          modified: true,
+          data: { ...appMarketing, message: locale, data: { ...appMarketing.data, service } },
+          etag: null,
+        },
+};
+export const appMarketingCache = getAppMarketingCache(appMarketingOptions);
+export type AppMarketingCacheShape = Assert<Equal<typeof appMarketingCache, AppMarketingCache>>;
+export type AppMarketingGetReturn = Assert<
+  Equal<ReturnType<typeof appMarketingCache.get>, Promise<AppMarketingResponse>>
+>;
+export type AppMarketingContentNullable = Assert<
+  Equal<AppMarketingResponse["data"]["content"], AppMarketingContent | null>
+>;
+export type AppMarketingLandingOptional = Assert<
+  Equal<Pick<AppMarketingContent, "landing">, Partial<Pick<AppMarketingContent, "landing">>>
+>;
+export const noMarketingContent: AppMarketingResponse = {
+  ...appMarketing,
+  data: { ...appMarketing.data, content: null, marketplace: null, connectionMethods: [{ authType: "no_auth" }] },
+  meta: { locale: "en", contentLocale: null, availableContentLocales: [] },
+};
+export const marketingMarketplace: AppMarketingResponse["data"]["marketplace"] = {
+  id: "gmail",
+  pricing: "metered",
+  actionIds: ["gmail.read"],
+};
+// @ts-expect-error marketing queries require a service string
+appMarketingCache.get({ service: "gmail" });
+// @ts-expect-error marketing metadata is required
+export const missingMarketingMeta: AppMarketingResponse = { success: true, message: "", data: appMarketing.data };
+// @ts-expect-error contentLocale must be a supported locale or null
+export const invalidMarketingLocale: AppMarketingResponse["meta"]["contentLocale"] = "fr";

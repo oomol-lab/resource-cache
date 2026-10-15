@@ -4,11 +4,15 @@ import {
   type ActionsQuery,
   type ActionsResponse,
   type AppCatalogResponse,
+  type AppMarketingCacheOptions,
+  type AppMarketingQuery,
+  type AppMarketingResponse,
   type ConnectionsCacheOptions,
   type ConnectionsQuery,
   type ConnectionsResponse,
   getActionsCache,
   getAppCatalogCache,
+  getAppMarketingCache,
   getConnectionsCache,
   getProvidersCache,
   type ProvidersCacheOptions,
@@ -100,6 +104,65 @@ const connections: ConnectionsResponse = {
   },
 };
 
+const marketing: AppMarketingResponse = {
+  success: true,
+  message: "",
+  data: {
+    service: "gmail",
+    displayName: "Gmail",
+    searchAliases: ["mail"],
+    iconUrl: null,
+    homepageUrl: null,
+    categories: [{ id: "email", displayName: "Email" }],
+    authTypes: ["oauth2"],
+    iconSpritePosition: null,
+    connectionMethods: [{ authType: "oauth2", oauthClientPolicy: "default_only" }],
+    marketplace: null,
+    actions: [{ id: "gmail.read", name: "read", displayName: "Read", description: "Read mail" }],
+    triggers: [{ id: "gmail.received", name: "received", description: "New mail", deliveryMode: "poll" }],
+    content: {
+      title: "Gmail",
+      description: "Email automation",
+      headline: "Automate email",
+      intro: "Connect your inbox",
+      overview: "Read and organize mail",
+      setup: { summary: "Connect Gmail", requirements: ["Gmail account"], notes: [] },
+      useCases: [
+        {
+          id: "summarize",
+          title: "Summarize mail",
+          description: "Summarize unread mail",
+          prompt: "Summarize my mail",
+          requirements: [{ service: "gmail", actionIds: ["gmail.read"], triggerIds: [] }],
+        },
+      ],
+      capabilityGroups: [{ id: "read", title: "Read", description: "Read mail", actionIds: ["gmail.read"] }],
+      faq: [{ id: "access", question: "What is required?", answer: "A Gmail account" }],
+      relatedServices: ["calendar"],
+      landing: {
+        taskSummary: "Summarize mail",
+        definition: "Email automation",
+        about: "Gmail",
+        heroCaption: "Your inbox",
+        demo: {
+          useCaseId: "summarize",
+          request: "Summarize my mail",
+          reply: "Here is your summary",
+          result: {
+            label: "Inbox",
+            title: "Summary",
+            summary: "One message",
+            items: [{ id: "mail", label: "Mail", text: "Hello" }],
+          },
+          steps: [{ id: "read", title: "Read", description: "Read unread mail" }],
+        },
+        relatedUseCaseIds: ["summarize"],
+      },
+    },
+  },
+  meta: { locale: "zh-CN", contentLocale: "en", availableContentLocales: ["en"] },
+};
+
 function options<T>(data: T) {
   return {
     environment: "production",
@@ -125,6 +188,128 @@ function connectionOptions(overrides: Partial<ConnectionsCacheOptions> = {}) {
 }
 
 describe("OOMOL cache factories", () => {
+  it("persists complete marketing responses and revalidates expired data with its ETag", async () => {
+    const opts = options(marketing);
+    const cache = getAppMarketingCache(opts);
+    const [first, concurrent] = await Promise.all([cache.get("gmail"), cache.get("gmail")]);
+    expect(first).toEqual(marketing);
+    expect(concurrent).toBe(first);
+    expect(await cache.get("gmail")).toBe(first);
+    expect(opts.load).toHaveBeenCalledTimes(1);
+    expect(opts.load).toHaveBeenCalledWith(
+      { locale: "zh-CN", service: "gmail" },
+      { etag: null, signal: expect.any(AbortSignal) },
+    );
+    await cache.dispose();
+    const restored = getAppMarketingCache(opts);
+    expect(restored).not.toBe(cache);
+    expect(await restored.get("gmail")).toEqual(marketing);
+    expect(opts.decode).toHaveBeenCalledWith(marketing);
+    expect(opts.load).toHaveBeenCalledTimes(1);
+
+    vi.spyOn(Date, "now").mockReturnValue(1_100);
+    opts.load.mockResolvedValueOnce({ modified: false });
+    expect(await restored.get("gmail")).toEqual(marketing);
+    expect(opts.load).toHaveBeenLastCalledWith(
+      { locale: "zh-CN", service: "gmail" },
+      { etag: '"v1"', signal: expect.any(AbortSignal) },
+    );
+    expect(await restored.peek("gmail")).toMatchObject({ fresh: true, validatedAt: 1_100 });
+  });
+
+  it("isolates marketing services, locales, environments, schemas and other resources", async () => {
+    const load = vi.fn(async ({ service }: AppMarketingQuery) =>
+      modified({
+        ...marketing,
+        data: { ...marketing.data, service, content: null },
+        meta: { ...marketing.meta, contentLocale: null, availableContentLocales: [] },
+      }),
+    );
+    const opts = { ...options(marketing), load };
+    const cache = getAppMarketingCache(opts);
+    expect(getAppMarketingCache({ ...opts, environment: undefined })).toBe(cache);
+    expect(await cache.get("gmail")).toMatchObject({
+      data: { service: "gmail", content: null },
+      meta: { contentLocale: null },
+    });
+    expect(await cache.peek("calendar")).toBeUndefined();
+    expect(await cache.get("calendar")).toMatchObject({ data: { service: "calendar" } });
+    for (const scope of [{ locale: "en" }, { environment: "staging" }, { schemaVersion: 2 }]) {
+      const other = getAppMarketingCache({ ...opts, ...scope });
+      expect(other).not.toBe(cache);
+      expect(await other.peek("gmail")).toBeUndefined();
+    }
+    expect(await getAppCatalogCache(options(apps)).peek()).toBeUndefined();
+    expect(await getActionsCache(options(actions)).peek("gmail")).toBeUndefined();
+    await cache.get("a/b");
+    await cache.dispose();
+    expect(await getAppMarketingCache({ ...opts, locale: "zh-CN/a" }).peek("b")).toBeUndefined();
+    const restored = getAppMarketingCache(opts);
+    const loadCount = load.mock.calls.length;
+    expect(await restored.get("a/b")).toMatchObject({
+      data: { service: "a/b", content: null },
+      meta: { contentLocale: null, availableContentLocales: [] },
+    });
+    expect(load).toHaveBeenCalledTimes(loadCount);
+  });
+
+  it("keys marketing language fallbacks by requested locale and captures loader configuration", async () => {
+    const load = vi.fn(async (query: { locale: string; service: string }) => {
+      const response = { ...marketing, message: query.locale, data: { ...marketing.data, service: query.service } };
+      query.locale = "en";
+      query.service = "calendar";
+      return modified(response);
+    });
+    const opts = { ...options(marketing), load };
+    const chinese = getAppMarketingCache(opts);
+    opts.locale = "en";
+    opts.load = vi.fn(async () =>
+      modified({ ...marketing, message: "replacement", meta: { ...marketing.meta, locale: "en" } }),
+    );
+    const english = getAppMarketingCache(opts);
+
+    expect(await chinese.get("gmail")).toMatchObject({ message: "zh-CN", meta: { contentLocale: "en" } });
+    expect(await english.peek("gmail")).toBeUndefined();
+    expect(await english.get("gmail")).toMatchObject({ message: "replacement" });
+    expect(await chinese.get("gmail", { revalidate: true })).toMatchObject({
+      message: "zh-CN",
+      data: { service: "gmail" },
+    });
+    expect(await chinese.peek("calendar")).toBeUndefined();
+    expect(load).toHaveBeenCalledTimes(2);
+    expect(opts.load).toHaveBeenCalledTimes(1);
+
+    await chinese.dispose();
+    const restored = getAppMarketingCache({ ...options(marketing), load });
+    expect(await restored.get("gmail")).toMatchObject({ message: "zh-CN", meta: { contentLocale: "en" } });
+    expect(load).toHaveBeenCalledTimes(2);
+  });
+
+  it("rejects failed marketing loads without persisting an error or extending freshness", async () => {
+    const opts = options(marketing);
+    const cache = getAppMarketingCache(opts);
+    opts.load.mockRejectedValueOnce(new Error("404"));
+    await expect(cache.get("gmail")).rejects.toThrow("404");
+    expect(await cache.peek("gmail")).toBeUndefined();
+    await cache.get("gmail");
+    vi.spyOn(Date, "now").mockReturnValue(1_100);
+    opts.load.mockRejectedValueOnce(new Error("500"));
+    await expect(cache.get("gmail")).rejects.toThrow("500");
+    expect(await cache.peek("gmail")).toMatchObject({ data: marketing, fresh: false, validatedAt: 1_000 });
+  });
+
+  it("validates marketing configuration and service queries", async () => {
+    for (const field of ["locale", "environment", "load"] as const) {
+      expect(() =>
+        getAppMarketingCache({ ...options(marketing), [field]: null } as unknown as AppMarketingCacheOptions),
+      ).toThrow(TypeError);
+    }
+    const cache = getAppMarketingCache(options(marketing));
+    for (const service of ["", " ", null, 1]) {
+      await expect(cache.get(service as string)).rejects.toThrow("service must be nonempty");
+    }
+  });
+
   it("passes locale and validators to the loader and restores the same identity", async () => {
     const opts = options(providers);
     const first = getProvidersCache(opts);

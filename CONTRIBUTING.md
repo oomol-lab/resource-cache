@@ -24,17 +24,18 @@ without browser storage. Build before running `scripts/check-package.mjs` direct
 Keep generic cache factories and shared cache types in the root entrypoint. Keep OOMOL response types and their
 environment-and-response-keyed factories in `/oomol`, and maintain them when the API response contract changes. Preserve complete
 successful envelopes, including Providers metadata, AppCatalog summary, category and authentication aggregates, sprite
-metadata, complete service Action catalogs, and Connections summary metadata.
+metadata, complete service Action catalogs, App Marketing content and locale metadata, and Connections summary metadata.
 
 Keep OOMOL factory namespaces stable and include deployment environment and the response scope in their cache identity. Add a new
-factory only when an endpoint has its own response contract. Providers, Actions and App Catalog responses are shared
-catalog data, so their cache identity must not include account, team, flow, permission, or token values. A request may
+factory only when an endpoint has its own response contract. Providers, Actions, App Catalog and App Marketing responses are
+account-independent, so their cache identity must not include account, team, flow, permission, or token values. A request may
 require authentication for Providers or Actions; keep that concern in those factories' `load` functions. App Catalog
-is public and does not require credentials. Do not make callers assemble OOMOL namespaces or locale keys. The optional
+and App Marketing are public and do not require credentials. Do not make callers assemble OOMOL namespaces or locale keys. The optional
 `environment` defaults to `production` and is reserved for deployment boundaries such as `staging`.
 `get*Cache` uses a registry on `globalThis` under
 `Symbol.for("oomol-lab.resource-cache.oomol-singletons")`, keyed by resource, environment, response scope, and schema
-version. An Actions cache uses `service` as its per-operation key, so one instance can serve multiple service catalogs.
+version. Actions and App Marketing caches use `service` as their per-operation key, so one instance can serve multiple services.
+App Marketing loaders must send the configured locale explicitly to keep language negotiation consistent with the cache identity.
 A Connections cache is account-scoped: it uses sessionStorage, requires a non-secret `sessionId`, and includes the
 required `ownerId` in its identity. Its `dispose()` removes all Connections schema versions for that session.
 A successful `dispose()` removes that registry entry while leaving the old reference closed. Keep the OOMOL surface to

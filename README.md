@@ -140,6 +140,7 @@ import type {
   ProvidersResponse,
   ActionsResponse,
   AppCatalogResponse,
+  AppMarketingResponse,
   ConnectionsResponse,
 } from '@oomol-lab/resource-cache/oomol'
 ```
@@ -149,19 +150,20 @@ import type {
 | `ProvidersResponse` | `/v1/providers`, including top-level `meta` and sprite metadata. |
 | `ActionsResponse` | `/v1/actions?service=…`, including the complete service action catalog. |
 | `AppCatalogResponse` | `/public/v1/apps`, including featured actions, availability, catalog aggregates, and sprite metadata. |
+| `AppMarketingResponse` | `/public/v1/apps/{service}`, including website marketing content, optional landing content, capabilities, and locale metadata. |
 | `ConnectionsResponse` | `/v1/connections`, including connection app views and summary metadata. |
 
 Validate these responses in `load` and `decode`.
 
-The OOMOL entry exports separate configuration types, `ProvidersCacheOptions`, `ActionsCacheOptions`, and
-`AppCatalogCacheOptions`, for the three catalog factories. These factories serve catalog data shared across accounts,
-teams and flows. They use fixed namespaces and include `environment` and `locale` (and, for Actions, `service`) in the
+The OOMOL entry exports separate configuration types, `ProvidersCacheOptions`, `ActionsCacheOptions`,
+`AppCatalogCacheOptions`, and `AppMarketingCacheOptions`. These factories serve data shared across accounts,
+teams and flows. They use fixed namespaces and include `environment` and `locale` (and, for Actions and App Marketing, `service`) in the
 cache identity, so callers do not need to construct namespace or key strings. `environment` defaults to `production`
 and can be set to values such as `staging` when the host serves a separate deployment. A request may still require an
-access token. Keep that token in the Providers or Actions request layer inside `load`; App Catalog is public and does
-not require credentials. Credentials must not be used as a cache key, namespace, or environment value.
+access token. Keep that token in the Providers or Actions request layer inside `load`; App Catalog and App Marketing
+are public and do not require credentials. Credentials must not be used as a cache key, namespace, or environment value.
 
-Use `getProvidersCache`, `getActionsCache`, and `getAppCatalogCache`. They return the shared cache for an environment,
+Use `getProvidersCache`, `getActionsCache`, `getAppCatalogCache`, and `getAppMarketingCache`. They return the shared cache for an environment,
 locale and schema version. The first call fixes `load`, `decode`, and `maxAge` for that identity; provide a stable
 `load` function that reads the current request credentials. The singleton registry is shared across package copies in
 the same JavaScript runtime.
@@ -197,6 +199,42 @@ const actions = getActionsCache({
 const gmail = await actions.get('gmail')
 const calendar = await actions.get('calendar')
 ```
+
+App Marketing also accepts a service per operation and stores the complete website marketing response in IndexedDB:
+
+```ts
+import { getAppMarketingCache } from '@oomol-lab/resource-cache/oomol'
+
+const marketing = getAppMarketingCache({
+  locale: 'zh-CN',
+  schemaVersion: 1,
+  maxAge: 10 * 60_000,
+  decode: decodeAppMarketing,
+  async load({ locale, service }, { etag, signal }) {
+    const response = await fetch(
+      `https://connector.oomol.com/public/v1/apps/${encodeURIComponent(service)}?locale=${encodeURIComponent(locale)}`,
+      { headers: etag === null ? {} : { 'If-None-Match': etag }, signal },
+    )
+    if (response.status === 304) {
+      return { modified: false, etag: response.headers.get('ETag') ?? undefined }
+    }
+    if (!response.ok) throw new Error(`Loading app marketing failed: ${response.status}`)
+    return {
+      modified: true,
+      data: decodeAppMarketing(await response.json()),
+      etag: response.headers.get('ETag'),
+    }
+  },
+})
+
+const response = await marketing.get('gmail')
+const content = response.data.content // May be null when no editorial content exists.
+```
+
+Supply your response validator as `decodeAppMarketing`. Send the configured `locale` explicitly in the request so
+the cache identity matches the requested language instead of relying on a changing `Accept-Language` header.
+The response retains `meta.locale`, `meta.contentLocale`, and `meta.availableContentLocales` to describe language
+fallbacks. A successful response with `content: null` is cached normally; failed requests reject without replacing cached data.
 
 Connections are scoped to a login session and use `sessionStorage`. The required `sessionId` must be a stable,
 non-secret login identifier, never an access token. `ownerId` identifies the connection owner and is part of the cache
