@@ -64,7 +64,7 @@ type declarations, or package artifacts.
 Use a valid timestamp and an independent invalidation marker:
 
 ```ts
-fresh = !invalidated && validatedAt <= now && now - validatedAt < maxAge
+fresh = !invalidated && validatedAt <= now && now - validatedAt < maxAge;
 ```
 
 `validatedAt` is Unix milliseconds at successful load or validation completion. Normalize missing, nonnumeric,

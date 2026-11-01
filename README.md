@@ -17,67 +17,70 @@ npm add @oomol-lab/resource-cache
 ## Usage
 
 ```ts
-import { createPersistentCache, type CacheOptions } from '@oomol-lab/resource-cache'
+import { createPersistentCache, type CacheOptions } from "@oomol-lab/resource-cache";
 
-type Item = { id: string; name: string }
-type Query = { locale: string }
+type Item = { id: string; name: string };
+type Query = { locale: string };
 
 function decodeItems(value: unknown): Item[] {
-  if (!Array.isArray(value) || !value.every(item =>
-    item !== null && typeof item === 'object' &&
-    typeof item.id === 'string' && typeof item.name === 'string'
-  )) {
-    throw new TypeError('Invalid items response')
+  if (
+    !Array.isArray(value) ||
+    !value.every(
+      (item) =>
+        item !== null && typeof item === "object" && typeof item.id === "string" && typeof item.name === "string",
+    )
+  ) {
+    throw new TypeError("Invalid items response");
   }
-  return value
+  return value;
 }
 
 const cacheOptions: CacheOptions<Item[], Query> = {
-  namespace: 'production:items',
+  namespace: "production:items",
   schemaVersion: 1,
   maxAge: 5 * 60_000,
   key: ({ locale }) => locale,
   decode: decodeItems,
   async load({ locale }, { etag, signal }) {
     const response = await fetch(`/api/items?locale=${encodeURIComponent(locale)}`, {
-      headers: etag === null ? {} : { 'If-None-Match': etag },
+      headers: etag === null ? {} : { "If-None-Match": etag },
       signal,
-    })
+    });
     if (response.status === 304) {
-      return { modified: false, etag: response.headers.get('ETag') ?? undefined }
+      return { modified: false, etag: response.headers.get("ETag") ?? undefined };
     }
-    if (!response.ok) throw new Error(`Loading items failed: ${response.status}`)
+    if (!response.ok) throw new Error(`Loading items failed: ${response.status}`);
     return {
       modified: true,
       data: decodeItems(await response.json()),
-      etag: response.headers.get('ETag'),
-    }
+      etag: response.headers.get("ETag"),
+    };
   },
-}
+};
 
-const items = createPersistentCache(cacheOptions)
-const data = await items.get({ locale: 'en' })
+const items = createPersistentCache(cacheOptions);
+const data = await items.get({ locale: "en" });
 ```
 
 Use `load` to send requests and validate network responses. Use `decode` to restore stored data.
 Treat returned data as read-only.
 
-| `load` result | Meaning |
-| --- | --- |
-| `{ modified: true, data, etag }` | Replace the complete response and ETag. Use `null` when no ETag is available. |
-| `{ modified: false, etag? }` | Reuse the response associated with the supplied ETag. Omit `etag` to retain it; use `null` to clear it. |
+| `load` result                    | Meaning                                                                                                 |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `{ modified: true, data, etag }` | Replace the complete response and ETag. Use `null` when no ETag is available.                           |
+| `{ modified: false, etag? }`     | Reuse the response associated with the supplied ETag. Omit `etag` to retain it; use `null` to clear it. |
 
 ## Options
 
-| Option | Value |
-| --- | --- |
-| `namespace` | Nonblank resource and environment name. |
-| `schemaVersion` | Positive safe integer. Increment for incompatible response or decoding changes. |
-| `maxAge` | Finite nonnegative milliseconds. Zero requires validation on every access. |
-| `key(query)` | Stable string identifying the complete response. |
-| `decode(value)` | Synchronous function that restores stored data; throw to reject an unusable record. |
-| `load(query, { etag, signal })` | Async function returning a complete response or an unmodified result. |
-| `sessionId` | Nonblank, non-secret login identifier, required by `createSessionCache`. |
+| Option                          | Value                                                                               |
+| ------------------------------- | ----------------------------------------------------------------------------------- |
+| `namespace`                     | Nonblank resource and environment name.                                             |
+| `schemaVersion`                 | Positive safe integer. Increment for incompatible response or decoding changes.     |
+| `maxAge`                        | Finite nonnegative milliseconds. Zero requires validation on every access.          |
+| `key(query)`                    | Stable string identifying the complete response.                                    |
+| `decode(value)`                 | Synchronous function that restores stored data; throw to reject an unusable record. |
+| `load(query, { etag, signal })` | Async function returning a complete response or an unmodified result.               |
+| `sessionId`                     | Nonblank, non-secret login identifier, required by `createSessionCache`.            |
 
 Choose different namespaces for different data environments. Include locale, user, team, permissions, and filters
 in the key when they affect the response. Caches sharing an identity must use compatible response and decoding contracts.
@@ -87,12 +90,12 @@ IndexedDB data must support structured cloning. Session data must survive JSON s
 
 ## Read and refresh
 
-| Call | Result |
-| --- | --- |
-| `get(query)` | Return fresh data or await loading. Loading errors reject the call. |
-| `get(query, { revalidate: true })` | Require a new validation, even when cached data is fresh. |
-| `get(query, { signal })` | Cancel this caller's wait with `AbortError`; shared loading continues. |
-| `peek(query)` | Read without loading. Return a snapshot, possibly stale, or `undefined`. |
+| Call                               | Result                                                                   |
+| ---------------------------------- | ------------------------------------------------------------------------ |
+| `get(query)`                       | Return fresh data or await loading. Loading errors reject the call.      |
+| `get(query, { revalidate: true })` | Require a new validation, even when cached data is fresh.                |
+| `get(query, { signal })`           | Cancel this caller's wait with `AbortError`; shared loading continues.   |
+| `peek(query)`                      | Read without loading. Return a snapshot, possibly stale, or `undefined`. |
 
 `maxAge` controls how long a successful response or validation can be reused. An unmodified result retains the cached
 data and refreshes its validation time.
@@ -105,12 +108,12 @@ Failed storage reads fall back to loading. Successful loads remain available in 
 
 ## Invalidate and clear
 
-| Call | Effect |
-| --- | --- |
-| `invalidate(query)` | Mark stale while retaining data and ETag. |
-| `remove(query)` | Delete data and ETag. |
-| `clear()` | Clear the current namespace, schemaVersion, and sessionId scope. |
-| `dispose()` | Close the instance. Keep IndexedDB data; delete session data for this namespace/sessionId across all schema versions. |
+| Call                | Effect                                                                                                                |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `invalidate(query)` | Mark stale while retaining data and ETag.                                                                             |
+| `remove(query)`     | Delete data and ETag.                                                                                                 |
+| `clear()`           | Clear the current namespace, schemaVersion, and sessionId scope.                                                      |
+| `dispose()`         | Close the instance. Keep IndexedDB data; delete session data for this namespace/sessionId across all schema versions. |
 
 These calls reject affected in-flight `get` and `peek` calls with `AbortError`. Cleanup errors propagate to the caller;
 failed deletion may leave stored data behind. Retry `dispose()` if session cleanup fails. Other methods reject after disposal.
@@ -121,12 +124,12 @@ or save their own request results after a cleanup.
 ## Login sessions
 
 ```ts
-import { createSessionCache } from '@oomol-lab/resource-cache'
+import { createSessionCache } from "@oomol-lab/resource-cache";
 
-const sessionItems = createSessionCache({ ...cacheOptions, sessionId: loginSessionId })
+const sessionItems = createSessionCache({ ...cacheOptions, sessionId: loginSessionId });
 
 // On logout:
-await sessionItems.dispose()
+await sessionItems.dispose();
 ```
 
 Supply `loginSessionId` from the application's login state. Keep it stable across page refreshes within a login and
@@ -142,16 +145,16 @@ import type {
   AppCatalogResponse,
   AppMarketingResponse,
   ConnectionsResponse,
-} from '@oomol-lab/resource-cache/oomol'
+} from "@oomol-lab/resource-cache/oomol";
 ```
 
-| Type | Successful response |
-| --- | --- |
-| `ProvidersResponse` | `/v1/providers`, including top-level `meta` and sprite metadata. |
-| `ActionsResponse` | `/v1/actions?service=…`, including the complete service action catalog. |
-| `AppCatalogResponse` | `/public/v1/apps`, including featured actions, availability, catalog aggregates, and sprite metadata. |
+| Type                   | Successful response                                                                                                            |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `ProvidersResponse`    | `/v1/providers`, including top-level `meta` and sprite metadata.                                                               |
+| `ActionsResponse`      | `/v1/actions?service=…`, including the complete service action catalog.                                                        |
+| `AppCatalogResponse`   | `/public/v1/apps`, including featured actions, availability, catalog aggregates, and sprite metadata.                          |
 | `AppMarketingResponse` | `/public/v1/apps/{service}`, including website marketing content, optional landing content, capabilities, and locale metadata. |
-| `ConnectionsResponse` | `/v1/connections`, including connection app views and summary metadata. |
+| `ConnectionsResponse`  | `/v1/connections`, including connection app views and summary metadata.                                                        |
 
 Validate these responses in `load` and `decode`.
 
@@ -169,66 +172,66 @@ locale and schema version. The first call fixes `load`, `decode`, and `maxAge` f
 the same JavaScript runtime.
 
 ```ts
-import { getAppCatalogCache } from '@oomol-lab/resource-cache/oomol'
+import { getAppCatalogCache } from "@oomol-lab/resource-cache/oomol";
 
 const apps = getAppCatalogCache({
-  environment: 'production',
-  locale: 'zh-CN',
+  environment: "production",
+  locale: "zh-CN",
   schemaVersion: 1,
   maxAge: 10 * 60_000,
   decode: decodeAppCatalog,
   load: ({ locale }, validation) => api.getPublicApps({ locale, ...validation }),
-})
+});
 
-const response = await apps.get()
+const response = await apps.get();
 ```
 
 An Actions cache accepts the service as the operation query, so one shared instance can serve multiple services:
 
 ```ts
-import { getActionsCache } from '@oomol-lab/resource-cache/oomol'
+import { getActionsCache } from "@oomol-lab/resource-cache/oomol";
 
 const actions = getActionsCache({
-  locale: 'zh-CN',
+  locale: "zh-CN",
   schemaVersion: 1,
   maxAge: 10 * 60_000,
   decode: decodeActions,
   load: ({ locale, service }, validation) => api.getActions({ locale, service, ...validation }),
-})
+});
 
-const gmail = await actions.get('gmail')
-const calendar = await actions.get('calendar')
+const gmail = await actions.get("gmail");
+const calendar = await actions.get("calendar");
 ```
 
 App Marketing also accepts a service per operation and stores the complete website marketing response in IndexedDB:
 
 ```ts
-import { getAppMarketingCache } from '@oomol-lab/resource-cache/oomol'
+import { getAppMarketingCache } from "@oomol-lab/resource-cache/oomol";
 
 const marketing = getAppMarketingCache({
-  locale: 'zh-CN',
+  locale: "zh-CN",
   schemaVersion: 1,
   maxAge: 10 * 60_000,
   decode: decodeAppMarketing,
   async load({ locale, service }, { etag, signal }) {
     const response = await fetch(
       `https://connector.oomol.com/public/v1/apps/${encodeURIComponent(service)}?locale=${encodeURIComponent(locale)}`,
-      { headers: etag === null ? {} : { 'If-None-Match': etag }, signal },
-    )
+      { headers: etag === null ? {} : { "If-None-Match": etag }, signal },
+    );
     if (response.status === 304) {
-      return { modified: false, etag: response.headers.get('ETag') ?? undefined }
+      return { modified: false, etag: response.headers.get("ETag") ?? undefined };
     }
-    if (!response.ok) throw new Error(`Loading app marketing failed: ${response.status}`)
+    if (!response.ok) throw new Error(`Loading app marketing failed: ${response.status}`);
     return {
       modified: true,
       data: decodeAppMarketing(await response.json()),
-      etag: response.headers.get('ETag'),
-    }
+      etag: response.headers.get("ETag"),
+    };
   },
-})
+});
 
-const response = await marketing.get('gmail')
-const content = response.data.content // May be null when no editorial content exists.
+const response = await marketing.get("gmail");
+const content = response.data.content; // May be null when no editorial content exists.
 ```
 
 Supply your response validator as `decodeAppMarketing`. Send the configured `locale` explicitly in the request so
@@ -241,20 +244,20 @@ non-secret login identifier, never an access token. `ownerId` identifies the con
 identity. Call `dispose()` when the session ends; it removes all connection scopes for that login session.
 
 ```ts
-import { getConnectionsCache } from '@oomol-lab/resource-cache/oomol'
+import { getConnectionsCache } from "@oomol-lab/resource-cache/oomol";
 
 const connections = getConnectionsCache({
-  environment: 'production',
+  environment: "production",
   sessionId: loginSessionId,
   ownerId: currentOwnerId,
   schemaVersion: 1,
   maxAge: 60_000,
   decode: decodeConnections,
   load: ({ ownerId }, validation) => api.getConnections({ ownerId, ...validation }),
-})
+});
 
-const response = await connections.get()
-await connections.dispose() // on logout
+const response = await connections.get();
+await connections.dispose(); // on logout
 ```
 
 Use the generic cache API for account- or permission-specific endpoints that do not match the Connections response
