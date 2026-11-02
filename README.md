@@ -17,7 +17,7 @@ npm add @oomol-lab/resource-cache
 ## Usage
 
 ```ts
-import { createPersistentCache, type CacheOptions } from "@oomol-lab/resource-cache";
+import { createPersistentCache, loadJson, type CacheOptions } from "@oomol-lab/resource-cache";
 
 type Item = { id: string; name: string };
 type Query = { locale: string };
@@ -41,21 +41,8 @@ const cacheOptions: CacheOptions<Item[], Query> = {
   maxAge: 5 * 60_000,
   key: ({ locale }) => locale,
   decode: decodeItems,
-  async load({ locale }, { etag, signal }) {
-    const response = await fetch(`/api/items?locale=${encodeURIComponent(locale)}`, {
-      headers: etag === null ? {} : { "If-None-Match": etag },
-      signal,
-    });
-    if (response.status === 304) {
-      return { modified: false, etag: response.headers.get("ETag") ?? undefined };
-    }
-    if (!response.ok) throw new Error(`Loading items failed: ${response.status}`);
-    return {
-      modified: true,
-      data: decodeItems(await response.json()),
-      etag: response.headers.get("ETag"),
-    };
-  },
+  load: ({ locale }, validation) =>
+    loadJson(`/api/items?locale=${encodeURIComponent(locale)}`, validation, decodeItems),
 };
 
 const items = createPersistentCache(cacheOptions);
@@ -171,16 +158,36 @@ locale and schema version. The first call fixes `load`, `decode`, and `maxAge` f
 `load` function that reads the current request credentials. The singleton registry is shared across package copies in
 the same JavaScript runtime.
 
+Loading, decoding and caching compose independently:
+
+- `loadJson(url, validation, decode, init?)` from the root entry performs a conditional JSON GET.
+  It sends the cache ETag, handles 304 without decoding a body, and combines the cache signal with
+  an optional request signal. The caller supplies the URL, credentials and timeout. HTTP failures
+  throw a status error; hosts with structured API errors can keep their own loader.
+- `decodeAppCatalogResponse` and `decodeAppMarketingResponse` from the OOMOL entry validate public
+  app display fields. The catalog decoder also validates sprite dimensions, HTTPS URLs and positions.
+  Both preserve the complete response, including unrecognized fields; they do not validate all editorial content.
+- All five `get*Cache` factories retain the same explicit `load`/`decode` options.
+  Providers, Actions and Connections can keep their authenticated host loaders and business decoders.
+  No factory chooses an endpoint, credentials, locale normalization or freshness policy.
+
 ```ts
-import { getAppCatalogCache } from "@oomol-lab/resource-cache/oomol";
+import { loadJson } from "@oomol-lab/resource-cache";
+import { decodeAppCatalogResponse, getAppCatalogCache } from "@oomol-lab/resource-cache/oomol";
 
 const apps = getAppCatalogCache({
   environment: "production",
-  locale: "zh-CN",
+  locale: "zh-cn",
   schemaVersion: 1,
   maxAge: 10 * 60_000,
-  decode: decodeAppCatalog,
-  load: ({ locale }, validation) => api.getPublicApps({ locale, ...validation }),
+  decode: decodeAppCatalogResponse,
+  load: ({ locale }, validation) =>
+    loadJson(
+      `https://connector.oomol.com/public/v1/apps?locale=${encodeURIComponent(locale)}`,
+      validation,
+      decodeAppCatalogResponse,
+      { credentials: "omit", signal: AbortSignal.timeout(15_000) },
+    ),
 });
 
 const response = await apps.get();
@@ -206,35 +213,32 @@ const calendar = await actions.get("calendar");
 App Marketing also accepts a service per operation and stores the complete website marketing response in IndexedDB:
 
 ```ts
-import { getAppMarketingCache } from "@oomol-lab/resource-cache/oomol";
+import { loadJson } from "@oomol-lab/resource-cache";
+import { decodeAppMarketingResponse, getAppMarketingCache } from "@oomol-lab/resource-cache/oomol";
 
 const marketing = getAppMarketingCache({
   locale: "zh-CN",
   schemaVersion: 1,
   maxAge: 10 * 60_000,
-  decode: decodeAppMarketing,
-  async load({ locale, service }, { etag, signal }) {
-    const response = await fetch(
+  decode: decodeAppMarketingResponse,
+  load: ({ locale, service }, validation) =>
+    loadJson(
       `https://connector.oomol.com/public/v1/apps/${encodeURIComponent(service)}?locale=${encodeURIComponent(locale)}`,
-      { headers: etag === null ? {} : { "If-None-Match": etag }, signal },
-    );
-    if (response.status === 304) {
-      return { modified: false, etag: response.headers.get("ETag") ?? undefined };
-    }
-    if (!response.ok) throw new Error(`Loading app marketing failed: ${response.status}`);
-    return {
-      modified: true,
-      data: decodeAppMarketing(await response.json()),
-      etag: response.headers.get("ETag"),
-    };
-  },
+      validation,
+      (value) => {
+        const response = decodeAppMarketingResponse(value);
+        if (response.data.service !== service) throw new Error("App service mismatch");
+        return response;
+      },
+      { credentials: "omit", signal: AbortSignal.timeout(15_000) },
+    ),
 });
 
 const response = await marketing.get("gmail");
 const content = response.data.content; // May be null when no editorial content exists.
 ```
 
-Supply your response validator as `decodeAppMarketing`. Send the configured `locale` explicitly in the request so
+Compose a stricter response decoder when consuming additional fields. Send the configured `locale` explicitly in the request so
 the cache identity matches the requested language instead of relying on a changing `Accept-Language` header.
 The response retains `meta.locale`, `meta.contentLocale`, and `meta.availableContentLocales` to describe language
 fallbacks. A successful response with `content: null` is cached normally; failed requests reject without replacing cached data.

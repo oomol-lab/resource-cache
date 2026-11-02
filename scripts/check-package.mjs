@@ -58,15 +58,23 @@ import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import * as esm from "@oomol-lab/resource-cache";
 import * as oomol from "@oomol-lab/resource-cache/oomol";
+Object.defineProperty(globalThis, "sessionStorage", { value: undefined, configurable: true });
+Object.defineProperty(globalThis, "indexedDB", { value: undefined, configurable: true });
 const require = createRequire(import.meta.url);
 const cjs = require("@oomol-lab/resource-cache");
+globalThis.fetch = async () => Response.json({ complete: true }, { headers: { ETag: '"json-v1"' } });
 const oomolKeys = [
+  "decodeAppCatalogResponse", "decodeAppMarketingResponse",
   "getActionsCache", "getAppCatalogCache", "getAppMarketingCache", "getConnectionsCache", "getProvidersCache", "oomolNamespaces",
 ];
 assert.deepEqual(Object.keys(oomol).sort(), oomolKeys);
 assert.deepEqual(Object.keys(require("@oomol-lab/resource-cache/oomol")).sort(), oomolKeys);
 for (const api of [esm, cjs]) {
-  assert.deepEqual(Object.keys(api).sort(), ["createPersistentCache", "createSessionCache"]);
+  assert.deepEqual(Object.keys(api).sort(), ["createPersistentCache", "createSessionCache", "loadJson"]);
+  assert.deepEqual(
+    await api.loadJson("https://example.com/items", { etag: null, signal: new AbortController().signal }, value => value),
+    { modified: true, data: { complete: true }, etag: '"json-v1"' },
+  );
   const options = { namespace: "smoke", schemaVersion: 1, maxAge: 100, key: query => query, decode: value => value,
     load: async query => ({ modified: true, data: query, etag: null }) };
   const persistent = api.createPersistentCache(options);

@@ -3,6 +3,8 @@ import { persistentStorage } from "./persistent";
 import { sessionStorageBackend } from "./session";
 import type { CacheOptions, ResourceCache, SessionCacheOptions } from "./types";
 
+export { loadJson } from "./loadJson";
+
 export type {
   CacheGetOptions,
   CacheOptions,

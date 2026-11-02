@@ -5,6 +5,7 @@ import {
   createPersistentCache,
   createSessionCache,
   type LoadResult,
+  loadJson,
   type ResourceCache,
 } from "../src/index";
 import {
@@ -21,6 +22,8 @@ import {
   type ConnectionsCache,
   type ConnectionsCacheOptions,
   type ConnectionsResponse,
+  decodeAppCatalogResponse,
+  decodeAppMarketingResponse,
   getActionsCache,
   getAppCatalogCache,
   getAppMarketingCache,
@@ -282,6 +285,19 @@ const appCatalogOptions: AppCatalogCacheOptions = {
 };
 export const appCatalogCache = getAppCatalogCache(appCatalogOptions);
 export const sharedAppCatalogCache = getAppCatalogCache(appCatalogOptions);
+export const publicAppCatalogCache = getAppCatalogCache({
+  locale: "zh-cn",
+  schemaVersion: 1,
+  maxAge: 300_000,
+  decode: decodeAppCatalogResponse,
+  load: ({ locale }, validation) =>
+    loadJson(`/apps?locale=${locale}`, validation, decodeAppCatalogResponse, { credentials: "omit" }),
+});
+export const publicMarketingLoad: Promise<LoadResult<AppMarketingResponse>> = loadJson(
+  "/apps/example",
+  { etag: null, signal: new AbortController().signal },
+  decodeAppMarketingResponse,
+);
 const connectionsOptions: ConnectionsCacheOptions = {
   environment: "production",
   sessionId: "session-1",

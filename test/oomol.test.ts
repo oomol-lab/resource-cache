@@ -1,8 +1,10 @@
 import { IDBFactory } from "fake-indexeddb";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { loadJson } from "../src/index";
 import {
   type ActionsQuery,
   type ActionsResponse,
+  type AppCatalogCacheOptions,
   type AppCatalogResponse,
   type AppMarketingCacheOptions,
   type AppMarketingQuery,
@@ -10,6 +12,7 @@ import {
   type ConnectionsCacheOptions,
   type ConnectionsQuery,
   type ConnectionsResponse,
+  decodeAppCatalogResponse,
   getActionsCache,
   getAppCatalogCache,
   getAppMarketingCache,
@@ -57,6 +60,42 @@ const apps: AppCatalogResponse = {
     iconSprite: null,
   },
 };
+
+it("composes public response loading with the existing singleton and conditional revalidation", async () => {
+  const fetcher = vi.fn().mockResolvedValue(Response.json(apps, { headers: { ETag: '"apps-v1"' } }));
+  vi.stubGlobal("fetch", fetcher);
+  const options: AppCatalogCacheOptions = {
+    locale: "zh-cn",
+    schemaVersion: 1,
+    maxAge: 300_000,
+    decode: decodeAppCatalogResponse,
+    load: ({ locale }, validation) =>
+      loadJson(`https://example.com/apps?locale=${locale}`, validation, decodeAppCatalogResponse, {
+        credentials: "omit",
+      }),
+  };
+  const cache = getAppCatalogCache(options);
+  const unusedLoader = vi.fn();
+  expect(
+    getAppCatalogCache({
+      locale: "zh-cn",
+      schemaVersion: 1,
+      maxAge: 300_000,
+      decode: (value) => value as AppCatalogResponse,
+      load: unusedLoader,
+    }),
+  ).toBe(cache);
+  expect(fetcher).not.toHaveBeenCalled();
+  const values = await Promise.all([cache.get(undefined), getAppCatalogCache(options).get(undefined)]);
+  expect(values).toEqual([apps, apps]);
+  expect(fetcher).toHaveBeenCalledTimes(1);
+  expect(fetcher.mock.calls[0]?.[0]).toBe("https://example.com/apps?locale=zh-cn");
+  expect(fetcher.mock.calls[0]?.[1]).toMatchObject({ credentials: "omit" });
+  fetcher.mockResolvedValue(new Response(null, { status: 304 }));
+  expect(await cache.get(undefined, { revalidate: true })).toEqual(apps);
+  expect(fetcher.mock.calls[1]?.[1].headers.get("If-None-Match")).toBe('"apps-v1"');
+  expect(unusedLoader).not.toHaveBeenCalled();
+});
 
 const connections: ConnectionsResponse = {
   success: true,

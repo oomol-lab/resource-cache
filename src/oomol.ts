@@ -1,6 +1,8 @@
 import { createPersistentCache, createSessionCache } from "./index";
 import type { CacheOptions, CacheValidation, LoadResult, ResourceCache } from "./types";
 
+export { decodeAppCatalogResponse, decodeAppMarketingResponse } from "./publicApps";
+
 /** Namespaces reserved for the OOMOL response factories. */
 export const oomolNamespaces = {
   providers: "oomol:providers",

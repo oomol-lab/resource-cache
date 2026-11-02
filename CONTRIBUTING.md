@@ -38,9 +38,14 @@ version. Actions and App Marketing caches use `service` as their per-operation k
 App Marketing loaders must send the configured locale explicitly to keep language negotiation consistent with the cache identity.
 A Connections cache is account-scoped: it uses sessionStorage, requires a non-secret `sessionId`, and includes the
 required `ownerId` in its identity. Its `dispose()` removes all Connections schema versions for that session.
-A successful `dispose()` removes that registry entry while leaving the old reference closed. Keep the OOMOL surface to
-the shared `get*Cache` functions; use the generic cache API when a different endpoint genuinely returns an account- or
-permission-specific response contract.
+A successful `dispose()` removes that registry entry while leaving the old reference closed. Use the generic cache API
+when a different endpoint genuinely returns an account- or permission-specific response contract.
+
+Keep request loading, business decoding and cache construction independent. Shared OOMOL display decoders belong in
+`/oomol` and preserve complete upstream responses. Add them for demonstrated consumer reuse; do not add one wrapper
+per factory for symmetry. The generic `loadJson` helper uses native Fetch and accepts the endpoint, decoder and request
+policy explicitly. It owns conditional HTTP handling, while cache factories retain identity, storage and freshness.
+Hosts retain their own authenticated protocols, structured error handling and response conversions.
 
 The factories accept host-provided request and decoding functions. Keep framework, HTTP client, and backend runtime
 dependencies out of the package. Storage adapters and serializers are private implementation details; the current
