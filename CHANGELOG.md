@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.1.6](https://github.com/oomol-lab/resource-cache/compare/v0.1.5...v0.1.6) (2026-11-02)
+
+### Features
+
+* add loadJson function for conditional JSON GET requests ([b249abc](https://github.com/oomol-lab/resource-cache/commit/b249abc978b185b6bc7b9e4be17a4a8283b1ceca))
+
 ## [0.1.5](https://github.com/oomol-lab/resource-cache/compare/v0.1.4...v0.1.5) (2026-10-15)
 
 ### Features
